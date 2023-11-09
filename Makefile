@@ -14,7 +14,7 @@ LIB = -L lib/
 FILES = $(wildcard $(SOURCEDIR)/*.cpp) $(wildcard Clipper2Lib/src/*.cpp) glad/src/glad.c
 
 splicer: $(FILES)
-	$(CXX) $(FLAGS) $(PROD_FLAGS) $(INC) $(LIB) -o $(BUILDDIR)/splicer $(FILES) -lglfw3dll -lopengl32
+	$(CXX) $(FLAGS) $(PROD_FLAGS) $(INC) $(LIB) -o $(BUILDDIR)/splicer $(FILES) -lglfw3dll -lopengl32 -lassimp-vc143-mt
 
 run: splicer
 	./build/splicer
