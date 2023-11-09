@@ -1,12 +1,37 @@
-#include <iostream>
-#include "clipper2/clipper.h"
+#include <GLFW/glfw3.h>
 
-int main(int argc, char const *argv[])
+int main(void)
 {
-    Clipper2Lib::Paths64 subject, clip, solution;
-    subject.push_back(Clipper2Lib::MakePath({100, 50, 10, 79, 65, 2, 65, 98, 10, 21}));
-    clip.push_back(Clipper2Lib::MakePath({98, 63, 4, 68, 77, 8, 52, 100, 19, 12}));
-    solution = Intersect(subject, clip, Clipper2Lib::FillRule::NonZero); 
-    std::cout << solution << std::endl;
+    GLFWwindow* window;
+
+    /* Initialize the library */
+    if (!glfwInit())
+        return -1;
+
+    /* Create a windowed mode window and its OpenGL context */
+    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    if (!window)
+    {
+        glfwTerminate();
+        return -1;
+    }
+
+    /* Make the window's context current */
+    glfwMakeContextCurrent(window);
+
+    /* Loop until the user closes the window */
+    while (!glfwWindowShouldClose(window))
+    {
+        /* Render here */
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        /* Swap front and back buffers */
+        glfwSwapBuffers(window);
+
+        /* Poll for and process events */
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
     return 0;
 }
