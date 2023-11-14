@@ -14,6 +14,8 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using HelixToolkit.Wpf;
+using Xceed.Wpf.Toolkit;
+
 
 
 
@@ -31,9 +33,21 @@ namespace Slicer
         public MainWindow()
         {
             InitializeComponent();
+            NozzleWidth.DataContext = this;
             this.DataContext = this;
         }
 
+        private double _speed;
+        public  double  Speed
+        {
+            get
+            { return _speed;  }
+            set
+            {
+                _speed = double.Round(value, 1);
+                NozzleWidth_OnValueChanged(_speed);
+            }
+        }
         public ICommand  MoveSlicerUp { get; private set; }
 
         private void ImportFile(object sender, RoutedEventArgs e)
@@ -59,7 +73,7 @@ namespace Slicer
                 MeshGeometry3D mesh = geometryModel.Geometry as MeshGeometry3D ?? throw new InvalidOperationException();
                 ModelVisual3D.Content = new GeometryModel3D(NormaliseMesh(mesh), geometryModel.Material);
 
-                double planeSize = getMeshSize(mesh) * 1.5;
+                double planeSize = GetMeshSize(mesh) * 1.5;
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
             }
@@ -69,7 +83,7 @@ namespace Slicer
          *  MeshGeometry3D mesh: the mesh to be normalised
          *  return: the same mesh but with new points
          */ 
-        private MeshGeometry3D NormaliseMesh(MeshGeometry3D mesh)
+        private static MeshGeometry3D NormaliseMesh(MeshGeometry3D mesh)
         {
             Point3DCollection points = mesh.Positions;
             Point3DCollection normal = new Point3DCollection();
@@ -95,23 +109,25 @@ namespace Slicer
             mesh.Positions = normal;
             return mesh;
         }
-
-        private double getMeshSize(MeshGeometry3D mesh)
+        /* calculates the largest dimension of the given mesh used for resizing the cutting plane
+         * 
+         */
+        private static double GetMeshSize(MeshGeometry3D mesh)
         {
-            double Xmax = 0;
-            double Xmin = 0;
-            double Ymax = 0;
-            double Ymin = 0;
+            double xmax = 0;
+            double xmin = 0;
+            double ymax = 0;
+            double ymin = 0;
 
             foreach (var point in mesh.Positions)
             {
-                Xmax = double.Max(Xmax, point.X);
-                Xmin = double.Min(Xmin, point.X);
-                Ymax = double.Max(Ymax, point.Y);
-                Ymin = double.Min(Ymin, point.Y);
+                xmax = double.Max(xmax, point.X);
+                xmin = double.Min(xmin, point.X);
+                ymax = double.Max(ymax, point.Y);
+                ymin = double.Min(ymin, point.Y);
             }
             
-            return double.Max(Xmax - Xmin, Ymax - Ymin);
+            return double.Max(xmax - xmin, ymax - ymin);
         }
         private GeometryModel3D FindLargestModel(Model3DGroup group) {
             if (group.Children.Count == 1)
@@ -143,14 +159,33 @@ namespace Slicer
             switch (e.Key)
             {
                 case Key.R:
-                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height + 1);
+                    Console.WriteLine(_speed);
+                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height + _speed);
                     return;
                 case Key.F:
-                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height - 1);
+                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height - _speed);
                     return;
                 default:
                     return;
             }
+        }
+
+        private void NozzleWidth_OnValueChanged(double value)
+        {
+            double height = CuttingPlane.Content.Transform.Value.OffsetZ;
+            double newHeight = 0;
+            
+            while (newHeight < height)
+            {
+                newHeight += _speed;
+            }
+
+            if (newHeight != 0)
+            {
+                newHeight -= _speed;
+            }
+            
+            CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, newHeight);
         }
     }
 }

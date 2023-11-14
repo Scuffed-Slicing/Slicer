@@ -5,16 +5,31 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Slicer"
         xmlns:h="http://helix-toolkit.org/wpf"
+        xmlns:f="http://propertytools.org/wpf"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" d:DataContext="{d:DesignInstance }">
     <Grid>
-        
         <Grid.RowDefinitions>
-            <RowDefinition Height="5*" />
+            <RowDefinition Height=".5*" />
+            <RowDefinition Height="7*" />
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
-        
-        <h:HelixViewport3D KeyDown="Viewport3D_OnKeyDown" ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="5*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" >
+                <TextBlock.Text>
+                    Nozzle Width: 
+                </TextBlock.Text>
+            </TextBlock>
+            <xctk:DoubleUpDown Grid.Column="1" FormatString="F1" Increment="0.1" CultureInfo="en-US" Value="{Binding Speed}" x:Name="NozzleWidth">
+            </xctk:DoubleUpDown>
+        </Grid>
+
+        <h:HelixViewport3D BorderThickness="1" BorderBrush="Black" Grid.Row="1" KeyDown="Viewport3D_OnKeyDown" ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
             
             <h:HelixViewport3D.InputBindings>
                 <KeyBinding  Command="{Binding MoveSlicerUp}" Key="R"/>
@@ -27,7 +42,7 @@
             
             <h:RectangleVisual3D x:Name="CuttingPlane" Width="100" Length="100" Normal="0,0,1" Material="{h:Material Red, Opacity=0.45}" BackMaterial="{h:Material Red, Opacity=0.45}"/>
             </h:HelixViewport3D>
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
                 <ColumnDefinition Width="1*" />
