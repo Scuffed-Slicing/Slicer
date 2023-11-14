@@ -55,12 +55,63 @@ namespace Slicer
                 StLReader reader = new StLReader();
                 Model3DGroup group = reader.Read(filename);
                 GeometryModel3D geometryModel = FindLargestModel(group);
-                MeshGeometry3D mesh = geometryModel.Geometry as MeshGeometry3D;
-                // access triangles
-                Int32Collection indices = mesh.TriangleIndices;
+                
+                MeshGeometry3D mesh = geometryModel.Geometry as MeshGeometry3D ?? throw new InvalidOperationException();
+                ModelVisual3D.Content = new GeometryModel3D(NormaliseMesh(mesh), geometryModel.Material);
 
-                ModelVisual3D.Content = geometryModel;
+                double planeSize = getMeshSize(mesh) * 1.5;
+                CuttingPlane.Length = planeSize;
+                CuttingPlane.Width = planeSize;
             }
+        }
+
+        /*  Makes sure all points in the mesh have a Z >= 0 and centers the mesh
+         *  MeshGeometry3D mesh: the mesh to be normalised
+         *  return: the same mesh but with new points
+         */ 
+        private MeshGeometry3D NormaliseMesh(MeshGeometry3D mesh)
+        {
+            Point3DCollection points = mesh.Positions;
+            Point3DCollection normal = new Point3DCollection();
+            
+            double lowestZ = 0;
+            double avgXOffset = 0;
+            double avgYOffset = 0;
+            foreach (var point in points)
+            {
+                avgXOffset += point.X;
+                avgYOffset += point.Y;
+                lowestZ = double.Min(point.Z, lowestZ);    
+
+            }
+            
+            avgYOffset /= points.Count;
+            avgXOffset /= points.Count;
+            
+            foreach (var point in points)
+            {  
+               normal.Add(new Point3D(point.X - avgXOffset, point.Y-avgYOffset, point.Z - lowestZ)); 
+            }
+            mesh.Positions = normal;
+            return mesh;
+        }
+
+        private double getMeshSize(MeshGeometry3D mesh)
+        {
+            double Xmax = 0;
+            double Xmin = 0;
+            double Ymax = 0;
+            double Ymin = 0;
+
+            foreach (var point in mesh.Positions)
+            {
+                Xmax = double.Max(Xmax, point.X);
+                Xmin = double.Min(Xmin, point.X);
+                Ymax = double.Max(Ymax, point.Y);
+                Ymin = double.Min(Ymin, point.Y);
+            }
+            
+            return double.Max(Xmax - Xmin, Ymax - Ymin);
         }
         private GeometryModel3D FindLargestModel(Model3DGroup group) {
             if (group.Children.Count == 1)
