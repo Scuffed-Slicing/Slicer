@@ -16,6 +16,10 @@ using System.Windows.Shapes;
 using HelixToolkit.Wpf;
 
 
+
+using PropertyTools.Wpf;
+
+
 namespace Slicer
 {
     /// <summary>
@@ -23,10 +27,14 @@ namespace Slicer
     /// </summary>
     public partial class MainWindow : Window
     {
+
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = this;
         }
+
+        public ICommand  MoveSlicerUp { get; private set; }
 
         private void ImportFile(object sender, RoutedEventArgs e)
         {
@@ -68,9 +76,30 @@ namespace Slicer
             }
             return maxModel;
         }
+        
+        private void MoveUp(object sender, RoutedEventArgs e)
+        {
+            Console.WriteLine("test");
+        }
         private void Slice(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("Cut my life into pieces");
+        }
+
+        private void Viewport3D_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            double height = CuttingPlane.Content.Transform.Value.OffsetZ;
+            switch (e.Key)
+            {
+                case Key.R:
+                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height + 1);
+                    return;
+                case Key.F:
+                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height - 1);
+                    return;
+                default:
+                    return;
+            }
         }
     }
 }

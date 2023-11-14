@@ -10,6 +10,7 @@
     <ItemGroup>
       <PackageReference Include="HelixToolkit" Version="2.24.0" />
       <PackageReference Include="HelixToolkit.Wpf" Version="2.24.0" />
+      <PackageReference Include="PropertyTools.Wpf" Version="3.1.0" />
     </ItemGroup>
 
 </Project>
