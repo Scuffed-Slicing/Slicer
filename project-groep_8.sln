@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicer", "Slicer\Slicer.csproj", "{C588A5B4-008B-4390-A19A-1F51FDED29A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicer", "Slicer\Slicer.csproj", "{1B6E5B00-D53D-4FDB-A0EE-ED7CB51270AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C588A5B4-008B-4390-A19A-1F51FDED29A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C588A5B4-008B-4390-A19A-1F51FDED29A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C588A5B4-008B-4390-A19A-1F51FDED29A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C588A5B4-008B-4390-A19A-1F51FDED29A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B6E5B00-D53D-4FDB-A0EE-ED7CB51270AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B6E5B00-D53D-4FDB-A0EE-ED7CB51270AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B6E5B00-D53D-4FDB-A0EE-ED7CB51270AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B6E5B00-D53D-4FDB-A0EE-ED7CB51270AD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {A9A7ABD6-10EA-49C2-B8A5-C0F38915E593}
+		SolutionGuid = {278D0DE9-B4BC-4F76-9E62-A36064297FFB}
 	EndGlobalSection
 EndGlobal
