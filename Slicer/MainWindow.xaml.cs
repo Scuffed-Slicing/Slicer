@@ -89,13 +89,13 @@ namespace Slicer
                 GeometryModel3D geometryModel = FindLargestModel(group);
                 
                 MeshGeometry3D mesh = geometryModel.Geometry as MeshGeometry3D ?? throw new InvalidOperationException();
-                FindIntersectionPointsAtHeight(mesh, 10);
                 ModelVisual3D.Content = new GeometryModel3D(NormaliseMesh(mesh), geometryModel.Material);
-
+                
                 double planeSize = GetMeshSize(mesh) * 1.5;
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
             }
+            
         }
 
         /*  Makes sure all points in the mesh have a Z >= 0 and centers the mesh
@@ -251,7 +251,12 @@ namespace Slicer
         }
         private void Slice(object sender, RoutedEventArgs e)
         {
-            Console.WriteLine("Cut my life into pieces");
+            if (ModelVisual3D.Content == null)
+            {
+                return;
+            }
+            MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
+            FindIntersectionPointsAtHeight(mesh, CuttingPlane.Content.Transform.Value.OffsetZ);
             //slice every layer en put them in mem
         }
 
