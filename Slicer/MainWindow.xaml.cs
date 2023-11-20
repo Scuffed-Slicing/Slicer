@@ -30,7 +30,7 @@ namespace Slicer
     public partial class MainWindow : Window
     {
         
-        private PathsD _model = new PathsD();
+        private List<PathsD> _model = new List<PathsD>();
 
         public MainWindow()
         {
@@ -151,17 +151,18 @@ namespace Slicer
 
         //make clipper2 paths for model
 
-        private static void FindIntersectionPointsAtHeight(MeshGeometry3D model, double sliceHeight)
+        private static PathsD FindIntersectionPointsAtHeight(MeshGeometry3D model, double sliceHeight)
         {   PathsD output = new PathsD();
-            Console.WriteLine("making clipper model");
-                // Console.WriteLine(model.Positions.Count);
-                List<Point3D> pointsOnHeight = new List<Point3D>();
+               // Console.WriteLine(model.Positions.Count);
 
             for(int i = 0; i < model.Positions.Count; i+=3){
                 //Console.WriteLine(model.Positions[i] + " " + model.Positions[i+1]+ " " + model.Positions[i+2]); //coords of every triangle 
                 Point3D p1 =model.Positions[i];
                 Point3D p2 =model.Positions[i+1];
                 Point3D p3 =model.Positions[i+2];
+                List<Point3D> pointsOnHeight = new List<Point3D>();
+
+                
                 // Console.WriteLine(i+ "[" + p1 + " | " + p2 +" | " + p3 + "]");
                 //points on plane 
 
@@ -204,13 +205,13 @@ namespace Slicer
                     pointsOnHeight.Add(FindIntersectionPoint(p3,p2,sliceHeight));
                 }             
                 //verbind alle punten die indezer driehoek gevonden zijn
+                List<PointD> convPoints = new List<PointD>();
+                foreach (var point in pointsOnHeight){
+                    convPoints.Add(new PointD (point.X, point.Y));
+                }
+                output.Add(new PathD(convPoints));
             }
-                Console.WriteLine(pointsOnHeight.Count);
-            // foreach (var item in model.Positions){
-            //     Console.WriteLine(item);
-            // }
-            // return new PathsD();
-            //p1.Z moet kleiner zijn ddan p2.z
+
             static Point3D FindIntersectionPoint(Point3D p1, Point3D p2, double height){
             // double t = p1.Z/height + p2.Z - p1.Z;
             //rand waarde waar z1 en z2 gelijk zijn uitgehaald door voorgaande code
@@ -220,7 +221,7 @@ namespace Slicer
             Console.WriteLine("found: " + output + "[" + p1 + " | " + p2 + "]");
             return output;
         }
-
+            return output;
         }
 
 
@@ -256,7 +257,8 @@ namespace Slicer
                 return;
             }
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            FindIntersectionPointsAtHeight(mesh, CuttingPlane.Content.Transform.Value.OffsetZ);
+            PathsD slice = FindIntersectionPointsAtHeight(mesh, CuttingPlane.Content.Transform.Value.OffsetZ);
+            // _model.Add(slice); //adding slice to model FOR WHOLE MODEL SLICING AT ONCE
             //slice every layer en put them in mem
         }
 
