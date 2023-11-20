@@ -17,7 +17,7 @@ using HelixToolkit.Wpf;
 using Xceed.Wpf.Toolkit;
 
 
-
+using Clipper2Lib;
 
 using PropertyTools.Wpf;
 
@@ -29,11 +29,15 @@ namespace Slicer
     /// </summary>
     public partial class MainWindow : Window
     {
+        
+        private PathsD _model = new PathsD();
 
         public MainWindow()
         {
             InitializeComponent();
             NozzleWidth.DataContext = this;
+            Layer.DataContext = this;
+
             this.DataContext = this;
         }
 
@@ -46,6 +50,20 @@ namespace Slicer
             {
                 _speed = double.Round(value, 1);
                 NozzleWidth_OnValueChanged(_speed);
+            }
+        }
+
+
+
+        private double _height;
+        public  double  Height
+        {
+            get
+            { return _height;  }
+            set
+            {
+                _height = double.Round(value, 1);
+                Layer_OnValueChanged(value);
             }
         }
         public ICommand  MoveSlicerUp { get; private set; }
@@ -71,6 +89,7 @@ namespace Slicer
                 GeometryModel3D geometryModel = FindLargestModel(group);
                 
                 MeshGeometry3D mesh = geometryModel.Geometry as MeshGeometry3D ?? throw new InvalidOperationException();
+                FindIntersectionPointsAtHeight(mesh, 10);
                 ModelVisual3D.Content = new GeometryModel3D(NormaliseMesh(mesh), geometryModel.Material);
 
                 double planeSize = GetMeshSize(mesh) * 1.5;
@@ -129,12 +148,94 @@ namespace Slicer
             
             return double.Max(xmax - xmin, ymax - ymin);
         }
+
+        //make clipper2 paths for model
+
+        private static void FindIntersectionPointsAtHeight(MeshGeometry3D model, double sliceHeight)
+        {   PathsD output = new PathsD();
+            Console.WriteLine("making clipper model");
+                // Console.WriteLine(model.Positions.Count);
+                List<Point3D> pointsOnHeight = new List<Point3D>();
+
+            for(int i = 0; i < model.Positions.Count; i+=3){
+                //Console.WriteLine(model.Positions[i] + " " + model.Positions[i+1]+ " " + model.Positions[i+2]); //coords of every triangle 
+                Point3D p1 =model.Positions[i];
+                Point3D p2 =model.Positions[i+1];
+                Point3D p3 =model.Positions[i+2];
+                // Console.WriteLine(i+ "[" + p1 + " | " + p2 +" | " + p3 + "]");
+                //points on plane 
+
+                //if points parallel line
+                if(p1.Z == p2.Z && p1.Z == sliceHeight){
+                    pointsOnHeight.Add(p1);
+                    pointsOnHeight.Add(p2);
+                }
+                if(p1.Z == p3.Z && p1.Z == sliceHeight){
+                    pointsOnHeight.Add(p1);
+                    pointsOnHeight.Add(p3);                
+                }
+                if(p2.Z == p3.Z && p2.Z == sliceHeight){
+                    pointsOnHeight.Add(p2);
+                    pointsOnHeight.Add(p3);      
+                }
+
+                //intersecting on the line
+                //on the line between p1 and p2
+                if(p1.Z <= sliceHeight && sliceHeight <= p2.Z){
+                    pointsOnHeight.Add(FindIntersectionPoint(p1,p2,sliceHeight));
+                }
+                if(p2.Z <= sliceHeight && sliceHeight <= p1.Z){
+                    pointsOnHeight.Add(FindIntersectionPoint(p2,p1,sliceHeight));
+                }
+
+                //on the line between p1 and p3
+                if(p1.Z <= sliceHeight && sliceHeight <= p3.Z){
+                    pointsOnHeight.Add(FindIntersectionPoint(p1,p3,sliceHeight));
+                }
+                if(p3.Z <= sliceHeight && sliceHeight <= p1.Z){
+                    pointsOnHeight.Add(FindIntersectionPoint(p3,p1,sliceHeight));
+                }
+
+                //on the line between p2 and p3
+                if(p2.Z <= sliceHeight && sliceHeight <= p3.Z){
+                    pointsOnHeight.Add(FindIntersectionPoint(p2,p3,sliceHeight));
+                }
+                if(p3.Z <= sliceHeight && sliceHeight <= p2.Z){
+                    pointsOnHeight.Add(FindIntersectionPoint(p3,p2,sliceHeight));
+                }             
+                //verbind alle punten die indezer driehoek gevonden zijn
+            }
+                Console.WriteLine(pointsOnHeight.Count);
+            // foreach (var item in model.Positions){
+            //     Console.WriteLine(item);
+            // }
+            // return new PathsD();
+            //p1.Z moet kleiner zijn ddan p2.z
+            static Point3D FindIntersectionPoint(Point3D p1, Point3D p2, double height){
+            // double t = p1.Z/height + p2.Z - p1.Z;
+            //rand waarde waar z1 en z2 gelijk zijn uitgehaald door voorgaande code
+            double t = (height- p1.Z)/(p2.Z - p1.Z); 
+
+            Point3D output = new Point3D(p1.X + t*(p2.X - p1.X), p1.Y + t*(p2.Y - p1.Y), height);
+            Console.WriteLine("found: " + output + "[" + p1 + " | " + p2 + "]");
+            return output;
+        }
+
+        }
+
+
+
+
         private GeometryModel3D FindLargestModel(Model3DGroup group) {
+            
             if (group.Children.Count == 1)
                 return group.Children[0] as GeometryModel3D;
             int maxCount = int.MinValue;
             GeometryModel3D maxModel = null;
             foreach (GeometryModel3D model in group.Children) {
+
+                Console.WriteLine(model);
+
                 int count = ((MeshGeometry3D)model.Geometry).Positions.Count;
                 if (maxCount < count) {
                     maxCount = count;
@@ -151,6 +252,7 @@ namespace Slicer
         private void Slice(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("Cut my life into pieces");
+            //slice every layer en put them in mem
         }
 
         private void Viewport3D_OnKeyDown(object sender, KeyEventArgs e)
@@ -187,5 +289,34 @@ namespace Slicer
             
             CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, newHeight);
         }
+        
+        private void Layer_OnValueChanged(double value)
+        {
+            Console.WriteLine(value);
+
+            //vind alle punten op een bepaalde hoogte 
+                //->check voor elke vertice als die door een bepaalde hoogte gaat zo ja bereken intersectie punt(e) op die hoogte
+                //verbind die punten vie een path in clipper [enkel als die in dezelfde polygon behoren]
+
+                //display dit 
+
+
+                //fix zodat er gaten kunnen zijn
+                // CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, value);
+
+
+             
+        }
+
+
+
+        private void Slice_At(double y){ //return slice mybe als pass model 
+            //slice = Model intersects with plane[heght]
+
+            //create plane at height y [maybe with +- nozlewidth/2]
+            //return the intersection
+
+        }
     }
+
 }
