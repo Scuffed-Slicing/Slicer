@@ -6,7 +6,7 @@ namespace Slicer;
 
 public partial class PopupWindow : Window
 {
-    public PopupWindow(PathsD slice)
+    public PopupWindow(PathsD slice, double offset)
     {
         InitializeComponent();
         foreach (var path in slice)
@@ -16,11 +16,11 @@ public partial class PopupWindow : Window
             line.Stroke = System.Windows.Media.Brushes.Black;
             line.StrokeThickness = 2;
             
-            line.X1 = path[0].x * 10;
-            line.Y1 = path[0].y * 10;
+            line.X1 = (offset + path[0].x) * 5;
+            line.Y1 = (offset + path[0].y) * 5;
             
-            line.X2 = path[1].x * 10;
-            line.Y2 = path[1].y * 10;
+            line.X2 = (offset + path[1].x) * 5;
+            line.Y2 = (offset + path[1].y) * 5;
 
             Canvas.Children.Add(line);
         }
