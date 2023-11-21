@@ -6,7 +6,10 @@
         xmlns:local="clr-namespace:Slicer"
         mc:Ignorable="d"
         Title="PopupWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+
+
+            <Canvas x:Name="Canvas" Margin="10, 10, 10, 10">
+            </Canvas>
+
+
 </Window>

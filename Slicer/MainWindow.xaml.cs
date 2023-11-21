@@ -153,19 +153,9 @@ namespace Slicer
                 {
                     for (int k = 0; k < j; k++)
                     {
-                        //the line is on the plane
-                        if (tri[j].Z == tri[k].Z && tri[j].Z == sliceHeight)
-                        {
-                            pointsOnHeight.Add(tri[j]);
-                            pointsOnHeight.Add(tri[k]);
-                            //if the plane intersects with a line of a triangle the other points can be ignored
-                            skip = true;
-                            break;
-                        }
-                        
                         //check if the slice height is in between both points
-                        if (double.Max(tri[j].Z, tri[k].Z) >= sliceHeight &&
-                            double.Min(tri[j].Z, tri[k].Z) <= sliceHeight )
+                        if (double.Max(tri[j].Z, tri[k].Z) > sliceHeight &&
+                            double.Min(tri[j].Z, tri[k].Z) < sliceHeight )
                         {
                             pointsOnHeight.Add(FindIntersectionPoint(tri[j],tri[k],sliceHeight));
                         }
@@ -236,7 +226,7 @@ namespace Slicer
                 return;
             }
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            PathsD slice = FindIntersectionPointsAtHeight(mesh, CuttingPlane.Content.Transform.Value.OffsetZ);
+            PathsD slice = FindIntersectionPointsAtHeight(mesh, CuttingPlane.Content.Transform.Value.OffsetZ + Double.Epsilon);
             foreach (var path in slice)
             {
                 foreach (var point in path)
@@ -245,8 +235,15 @@ namespace Slicer
                 }
                 Console.WriteLine();
             }
+            showSlice(slice);
             // _model.Add(slice); //adding slice to model FOR WHOLE MODEL SLICING AT ONCE
             //slice every layer en put them in mem
+        }
+
+        private void showSlice(PathsD slice)
+        {
+            PopupWindow popup = new PopupWindow(slice);
+            popup.ShowDialog();
         }
 
         private void Viewport3D_OnKeyDown(object sender, KeyEventArgs e)
