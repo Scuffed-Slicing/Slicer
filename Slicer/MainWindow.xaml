@@ -12,7 +12,6 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height=".5*" />
-            <RowDefinition Height=".5*" />
             <RowDefinition Height="7*" />
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
@@ -29,21 +28,7 @@
             <xctk:DoubleUpDown Grid.Column="1" FormatString="F1" Increment="0.1" Minimum="0" CultureInfo="en-US" Value="{Binding Speed}" x:Name="NozzleWidth">
             </xctk:DoubleUpDown>
         </Grid>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="5*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" >
-                <TextBlock.Text>
-                    Layer:
-                </TextBlock.Text>
-            </TextBlock>
-                <xctk:DoubleUpDown Grid.Column="1" FormatString="F1" Increment="1" Minimum="0" CultureInfo="en-US" Value="0" x:Name="Layer">
-                </xctk:DoubleUpDown>
-        </Grid>
-
-        <h:HelixViewport3D BorderThickness="1" BorderBrush="Black" Grid.Row="2" KeyDown="Viewport3D_OnKeyDown" ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
+        <h:HelixViewport3D BorderThickness="1" BorderBrush="Black" Grid.Row="1" KeyDown="Viewport3D_OnKeyDown" ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
             
             <h:HelixViewport3D.InputBindings>
                 <KeyBinding  Command="{Binding MoveSlicerUp}" Key="R"/>
@@ -56,7 +41,7 @@
             
             <h:RectangleVisual3D x:Name="CuttingPlane" Width="100" Length="100" Normal="0,0,1" Material="{h:Material Red, Opacity=0.45}" BackMaterial="{h:Material Red, Opacity=0.45}"/>
             </h:HelixViewport3D>
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
                 <ColumnDefinition Width="1*" />
