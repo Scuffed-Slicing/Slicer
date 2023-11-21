@@ -147,7 +147,6 @@ namespace Slicer
                 tri.Add(model.Positions[model.TriangleIndices[i + 2]]);
                 
                 List<Point3D> pointsOnHeight = new List<Point3D>();
-                bool skip = false;
                 //this loop makes each triangle point combo go once
                 for (int j = 0; j < 3; j++)
                 {
@@ -160,11 +159,7 @@ namespace Slicer
                             pointsOnHeight.Add(FindIntersectionPoint(tri[j],tri[k],sliceHeight));
                         }
                     }
-
-                    if (skip)
-                    {
-                        break;
-                    }
+                    
                 }
         
                 //verbind alle punten die indezer driehoek gevonden zijn
