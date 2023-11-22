@@ -91,7 +91,7 @@ namespace Slicer
             }
             int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _speed);
             Console.WriteLine(printNr);
-            if (printNr <= Figure.Count)
+            if (printNr <= Figure.Count && printNr >= 0)
             {
                 showSlice(Figure[printNr]);
             }
