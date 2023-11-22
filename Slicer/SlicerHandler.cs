@@ -123,24 +123,16 @@ public static class SlicerHandler
     public static PathsD ErodeAndShell(PathsD slice, double nozzleWidth, int nrShells)
     {
         Console.WriteLine("eroding");
-        var eroded = Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Square, EndType.Square);
-        //making multiple shells bug double of amount intended
-        // PathsD output = new PathsD();
-        // for(int i = 0; i < nrShells; i++){
-        //     PathsD temp = Clipper.InflatePaths(eroded, -_speed*(2*i), JoinType.Square, EndType.Square);
-        //     foreach(var path in temp){
-        //         output.Add(path);
-        //     }
-        // }
-
-
-        // MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-        // foreach (var p in slice){
-
-        // }
-        return eroded;
-        // return output;
-
-        // PopupWindow popup = new PopupWindow(eroded, GetMeshSize(mesh));
+        var eroded = Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Miter, EndType.Polygon);
+        
+        PathsD output = new PathsD();
+        for(int i = 0; i < nrShells; i++){
+            PathsD temp = Clipper.InflatePaths(eroded, -nozzleWidth * (2 * i), JoinType.Miter, EndType.Polygon);
+            foreach(var path in temp){
+                output.Add(path);
+            }
+        }
+        
+        return output;
     }
 }
