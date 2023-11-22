@@ -8,7 +8,7 @@ namespace Slicer;
 
 public static class SlicerHandler
 {
-    public static List<PathsD> SliceAll(MeshGeometry3D mesh, double nozzleWidth)
+    public static List<PathsD> SliceAll(MeshGeometry3D mesh, double nozzleWidth, int shells)
     {
         double height = 0;
         var maxHeight = ModelHandler.GetMeshHeight(mesh);
@@ -17,9 +17,10 @@ public static class SlicerHandler
         while (height <= maxHeight)
         {
             height = double.Round(height, 2);
-            var test = FindIntersectionPointsAtHeight(mesh, height + double.Epsilon);
-            Console.Out.WriteLine(height);
-            figure.Add(connectPaths(test));
+            var slice = FindIntersectionPointsAtHeight(mesh, height + double.Epsilon);
+            slice = connectPaths(slice);
+            slice = ErodeAndShell(slice, nozzleWidth, shells);
+            figure.Add(slice);
             height += nozzleWidth;
         }
 

@@ -23,8 +23,10 @@ namespace Slicer
             this.DataContext = this;
             Figure = new List<PathsD>();
             _speed = 0.4;
+            _shells = 2;
         }
 
+        private int _shells;
         private double _speed;
         public  double  Speed
         {
@@ -65,7 +67,7 @@ namespace Slicer
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
 
-                Figure = SlicerHandler.SliceAll(mesh, _speed);
+                Figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
                 GCodeHandler gCodeHandler = new GCodeHandler();
                 gCodeHandler.GenerateGCodeModel(Figure, _speed);
             }
@@ -89,7 +91,7 @@ namespace Slicer
             if (Figure.Count == 0)
             {
                 MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-                Figure = SlicerHandler.SliceAll(mesh, _speed);
+                Figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
             }
             int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _speed);
             Console.WriteLine(printNr);
@@ -115,10 +117,7 @@ namespace Slicer
         private void showSlice(PathsD slice)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            // printSlice(slice);
-            GCodeHandler gCodeHandler = new GCodeHandler();
-            gCodeHandler.GenerateGCodeSlice(slice, _speed);
-            PopupWindow popup = new PopupWindow(SlicerHandler.ErodeAndShell(slice, _speed, 4) , ModelHandler.GetMeshSize(mesh));
+            PopupWindow popup = new PopupWindow(slice , ModelHandler.GetMeshSize(mesh));
             
             popup.ShowDialog();
         }
@@ -146,8 +145,12 @@ namespace Slicer
         private void NozzleWidth_OnValueChanged(double value)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            if(mesh != null)
-                Figure = SlicerHandler.SliceAll(mesh, _speed);
+            if (mesh != null)
+            {
+                Figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                GCodeHandler gCodeHandler = new GCodeHandler();
+                gCodeHandler.GenerateGCodeModel(Figure, _speed);
+            }
             
             double height = CuttingPlane.Content.Transform.Value.OffsetZ;
             double newHeight = 0;

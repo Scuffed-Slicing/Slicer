@@ -4,3 +4,4 @@ build/
 Slicer/obj
 Slicer/bin
 .gcode*
+Slicer/output.gcode
