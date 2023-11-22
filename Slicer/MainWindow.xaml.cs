@@ -355,35 +355,46 @@ namespace Slicer
                 "M109 S60 ;wait for nozzle Temp",
                 "M82 ;absolute extrusion mode",
                 "G28 ;Home all axes",
+                "G92 E0 r ;reset extruder",
+                "G1 Z2.0 F3000 ;move up to not scrape bed",
+                ";-----------------------TestLine-------------------",
+                "G1 X0.1 Y20 Z0.3 F5000.0",
+                "G1 X0.1 Y200 z0.3 F1500.0 E15",
+                "G1 X0.4 Y200 z0.3 F1500.0 ",
+                "G1 X0.4 Y20 z0.3 F1500.0 E15",
+                ";-----------------------DoneWithTestLine-------------------",
+                "G92 E0 r ;reset extruder",
+                "G1 Z2.0 F3000 ;move up to not scrape bed",
+                "G92 E0 r ;reset extruder",
+                "G1 F2400 E-5; retractfillemant abit",
                 "M107 ;Turn fan off for first layer",
             ";-----------------------SetupDone-------------------\n\n"
 
             };
             File.WriteAllLines(loc, SetUpLines);
-            string[] preMoves = {
-            "G92 E0 r ;reset extruder",
-            "G1 Z2.0 F3000 ;move up to not scrape bed",
-            ";-----------------------NewLayer-------------------\n\n"
-            };
             //generate movement for layer
             bool first = true;
             foreach(var p  in theWay){
-
-                File.AppendAllLines(loc, preMoves);
                 for (int i = 0; i < p.Count; i++)
                 {
+                    if(first){
+                        File.AppendAllText(loc, "G1 F1200 X" +p[i].x + " Y" + p[i].y +"; move to layer start point\n");// first move
+                        first = false;
+                    }
+                    else{
+                        File.AppendAllText(loc, "G1 X" +p[i].x + " Y" + p[i].y +" E0.05 ; move to next point\n");// make move
+
+                    }
                     // Console.WriteLine(p[i].ToString());
-                    File.AppendAllText(loc, "G1 X" +p[i].x + " Y" + p[i].y +" ; move to next point\n");// make move
                 }
-                if(first){
-                    File.AppendAllText(loc, "M106 ;turn fan on after first layer\n");
-                    first = false;
-                }
+                    File.AppendAllText(loc,";-----------------------LayerDone-------------------\n\n");
+
+
                 
             }
             //reset printer
             string[] ResetLines = {
-                ";-----------------------MovesDone-------------------\n\n",
+                ";-----------------------PrintDone-------------------\n\n",
                 "M140 S0 ;bed Temp",
                 "M107 ;fan off",
                 "M220 S100 ; reset speed overwrite to 100%",
