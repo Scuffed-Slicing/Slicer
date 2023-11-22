@@ -19,7 +19,7 @@ public static class SlicerHandler
             height = double.Round(height, 2);
             var slice = FindIntersectionPointsAtHeight(mesh, height + double.Epsilon);
             slice = connectPaths(slice);
-            slice = ErodeAndShell(slice, nozzleWidth, shells);
+            // slice = ErodeAndShell(slice, nozzleWidth, shells);
             figure.Add(slice);
             height += nozzleWidth;
         }
@@ -27,6 +27,43 @@ public static class SlicerHandler
         return figure;
     }
 
+    public static List<PathsD> GenerateAllInfill(List<PathsD> figure, double fillPercent, double squareSize, double nozzleWidth)
+    {
+        var infills = new List<PathsD>();
+        foreach (var slice in figure)
+        {
+            var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
+            //bug? idk this just refuses to intersect
+            var pat = Clipper.Intersect(slice, fill, FillRule.Positive);
+            infills.Add(pat);
+        }
+
+        return infills;
+    }
+    public static PathsD GenerateInfill(double fillPercent, double squareSize, double nozzleWidth)
+    {
+        /* fill-percent is the inverse of the amount of room we need to leave to get said percent
+         * and then we divide by root(2) so we can add that nr to the x and y coord
+         */
+        double spacing = (double.Pow(fillPercent, -1) * nozzleWidth) / double.RootN(2, 2);
+        PathsD pattern = new PathsD();
+
+        PointD centre = new PointD(-squareSize / 2, -squareSize / 2);
+        PointD end = new PointD(squareSize / 2, squareSize / 2);
+        while (centre.x <= end.x)
+        {
+            PointD topLine = new PointD(centre.x - squareSize / 2, centre.y + squareSize / 2);
+            PointD botLine = new PointD(centre.x + squareSize / 2, centre.y - squareSize / 2);
+            
+            pattern.Add(new PathD{topLine, botLine});
+
+            centre.x += spacing;
+            centre.y += spacing;
+        }
+
+        return pattern;
+
+    }
     public static PathsD FindIntersectionPointsAtHeight(MeshGeometry3D model, double sliceHeight)
     {
         var output = new PathsD();

@@ -21,12 +21,17 @@ namespace Slicer
             InitializeComponent();
             NozzleWidth.DataContext = this;
             this.DataContext = this;
-            Figure = new List<PathsD>();
+            _figure = new List<PathsD>();
+            _infill = new List<PathsD>();
             _speed = 0.4;
             _shells = 2;
-            _genCode = true;
+            _genCode = false;
+            
         }
 
+
+        private List<PathsD> _figure;
+        private List<PathsD> _infill;
         private bool _genCode;
         private int _shells;
         private double _speed;
@@ -41,7 +46,7 @@ namespace Slicer
             }
         }
         
-        private List<PathsD> Figure { get; set; }
+        
         private void ImportFile(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog explorer = new Microsoft.Win32.OpenFileDialog();
@@ -68,12 +73,13 @@ namespace Slicer
                 double planeSize = ModelHandler.GetMeshSize(mesh) * 1.5;
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
-
-                Figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                
+                _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed);
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(Figure, _speed);
+                    gCodeHandler.GenerateGCodeModel(_figure, _speed);
                 }
             }
             
@@ -93,16 +99,19 @@ namespace Slicer
                 return;
             }
             
-            if (Figure.Count == 0)
+            if (_figure.Count == 0)
             {
                 MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-                Figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed);
             }
             int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _speed);
-            Console.WriteLine(printNr);
-            if (printNr <= Figure.Count && printNr >= 0)
+            Console.WriteLine("printing: " + printNr);
+            Console.WriteLine("infill total: " + _infill.Count);
+            Console.WriteLine("infill total lines: " + _infill[0].Count);
+            if (printNr <= _figure.Count && printNr >= 0)
             {
-                showSlice(Figure[printNr]);
+                ShowSlice(_figure[printNr], _infill[printNr]);
             }
         }
         
@@ -119,10 +128,10 @@ namespace Slicer
             }
             Console.WriteLine("===========================================================");
         }
-        private void showSlice(PathsD slice)
+        private void ShowSlice(PathsD slice, PathsD infill)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            PopupWindow popup = new PopupWindow(slice , ModelHandler.GetMeshSize(mesh));
+            PopupWindow popup = new PopupWindow(slice , infill, ModelHandler.GetMeshSize(mesh));
             
             popup.ShowDialog();
         }
@@ -152,11 +161,12 @@ namespace Slicer
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
             if (mesh != null)
             {
-                Figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed);
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(Figure, _speed);
+                    gCodeHandler.GenerateGCodeModel(_figure, _speed);
                 }
             }
             
