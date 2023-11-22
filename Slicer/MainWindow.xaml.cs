@@ -65,7 +65,7 @@ namespace Slicer
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
 
-                Figure = SlicerHandler.sliceAll(mesh, _speed);
+                Figure = SlicerHandler.SliceAll(mesh, _speed);
             }
             
         }
@@ -87,7 +87,7 @@ namespace Slicer
             if (Figure.Count == 0)
             {
                 MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-                Figure = SlicerHandler.sliceAll(mesh, _speed);
+                Figure = SlicerHandler.SliceAll(mesh, _speed);
             }
             int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _speed);
             Console.WriteLine(printNr);
@@ -145,7 +145,7 @@ namespace Slicer
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
             if(mesh != null)
-                Figure = SlicerHandler.sliceAll(mesh, _speed);
+                Figure = SlicerHandler.SliceAll(mesh, _speed);
             
             double height = CuttingPlane.Content.Transform.Value.OffsetZ;
             double newHeight = 0;

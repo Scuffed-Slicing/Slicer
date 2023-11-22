@@ -8,11 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Clipper2" Version="1.2.3" />
-      <PackageReference Include="Extended.Wpf.Toolkit" Version="4.5.1" />
-      <PackageReference Include="HelixToolkit" Version="2.24.0" />
-      <PackageReference Include="HelixToolkit.Wpf" Version="2.24.0" />
-      <PackageReference Include="PropertyTools.Wpf" Version="3.1.0" />
+        <PackageReference Include="Clipper2" Version="1.2.3"/>
+        <PackageReference Include="Extended.Wpf.Toolkit" Version="4.5.1"/>
+        <PackageReference Include="HelixToolkit" Version="2.24.0"/>
+        <PackageReference Include="HelixToolkit.Wpf" Version="2.24.0"/>
+        <PackageReference Include="PropertyTools.Wpf" Version="3.1.0"/>
     </ItemGroup>
 
 </Project>
