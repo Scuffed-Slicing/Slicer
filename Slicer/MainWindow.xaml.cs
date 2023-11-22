@@ -20,6 +20,8 @@ using Xceed.Wpf.Toolkit;
 using Clipper2Lib;
 
 using PropertyTools.Wpf;
+using System.Printing;
+using System.IO;
 
 
 namespace Slicer
@@ -299,9 +301,108 @@ namespace Slicer
         private void showSlice(PathsD slice)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            printSlice(slice);
-            PopupWindow popup = new PopupWindow(slice, GetMeshSize(mesh));
+            // printSlice(slice);
+            GenerateGCode(slice);
+            PopupWindow popup = new PopupWindow(ErodeAndShell(slice) , GetMeshSize(mesh));
+            
             popup.ShowDialog();
+        }
+
+        /*
+        *
+        */
+        int numberOfShells  = 4;
+        private PathsD ErodeAndShell (PathsD slice)
+        {
+            Console.WriteLine("eroding");
+            PathsD eroded = Clipper.InflatePaths(slice, -_speed/2, JoinType.Square, EndType.Square);
+            //making multiple shells bug double of amount inteded
+            // PathsD output = new PathsD();
+            // for(int i = 0; i < numberOfShells; i++){
+            //     PathsD temp = Clipper.InflatePaths(eroded, -_speed*(2*i), JoinType.Square, EndType.Square);
+            //     foreach(var path in temp){
+            //         output.Add(path);
+            //     }
+            // }
+
+
+            // MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
+            // foreach (var p in slice){
+                
+            // }
+            return eroded;
+            // return output;
+
+            // PopupWindow popup = new PopupWindow(eroded, GetMeshSize(mesh));
+           
+        }
+
+        
+        private void GenerateGCode(PathsD theWay){
+            var loc = "../../../output.gcode";
+            File.Delete(loc);
+            // File.Create(loc);
+
+
+
+
+
+            //Set settigs
+            string[] SetUpLines = {
+                "M140 S60 ;bed Temp",
+                "M190 S60 ;wait for bed Temp",
+                "M104 S60 ;nozzle Temp",
+                "M109 S60 ;wait for nozzle Temp",
+                "M82 ;absolute extrusion mode",
+                "G28 ;Home all axes",
+                "M107 ;Turn fan off for first layer",
+            ";-----------------------SetupDone-------------------\n\n"
+
+            };
+            File.WriteAllLines(loc, SetUpLines);
+            string[] preMoves = {
+            "G92 E0 r ;reset extruder",
+            "G1 Z2.0 F3000 ;move up to not scrape bed",
+            ";-----------------------NewLayer-------------------\n\n"
+            };
+            //generate movement for layer
+            bool first = true;
+            foreach(var p  in theWay){
+
+                File.AppendAllLines(loc, preMoves);
+                for (int i = 0; i < p.Count; i++)
+                {
+                    // Console.WriteLine(p[i].ToString());
+                    File.AppendAllText(loc, "G1 X" +p[i].x + " Y" + p[i].y +" ; move to next point\n");// make move
+                }
+                if(first){
+                    File.AppendAllText(loc, "M106 ;turn fan on after first layer\n");
+                    first = false;
+                }
+                
+            }
+            //reset printer
+            string[] ResetLines = {
+                ";-----------------------MovesDone-------------------\n\n",
+                "M140 S0 ;bed Temp",
+                "M107 ;fan off",
+                "M220 S100 ; reset speed overwrite to 100%",
+                "M221 S100 ; reset sextrude fctor overwrite to 100%",
+                "G90 ; coordinates to reltive",
+                "G1 F1800 E-3 ;retract fillament 3 mm",
+                "G1 F3000 Z20 ; move up 20 mm",
+                "G90 ;coordts to absolute",
+                "G1 X0 Y235 F1000 ; move to front of heatbed",
+                "M107 ;fan off",
+                "84 ;Disable stepper motors",
+                "M82 ;absolute extrusion mode",
+                "M104 S0 ; set extruder temp",
+                ";-----------------------ResetDone-------------------\n\n"
+
+            };
+            File.AppendAllLines(loc, ResetLines);
+
+
         }
         /* Connects a group of lines using recursion and a dictionary
          * 
