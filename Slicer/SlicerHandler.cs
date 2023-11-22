@@ -54,9 +54,10 @@ public static class SlicerHandler
 
             //empty groups and single points can be ignored
             if (convPoints.Count < 2) continue;
+            
             // sometimes a line that is the same point twice gets formed
             if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y) continue;
-
+         
             output.Add(new PathD(convPoints));
         }
 
@@ -77,50 +78,55 @@ public static class SlicerHandler
 
         return new Point3D(double.Round(x1 + t * (x2 - x1), 2), double.Round(y1 + t * (y2 - y1), 2), height);
     }
-
-
-    /* Connects a group of lines using recursion and a dictionary
-     *
-     */
+    
     private static PathsD connectPaths(PathsD paths)
     {
         var connections = new Dictionary<PointD, PathD>();
         foreach (var path in paths)
         {
             var connected = Connect(connections, path);
-            connections.Add(connected[0], connected);
+            connections.Add(connected.First(), connected);
         }
 
         return new PathsD(connections.Values);
     }
-
-    //bug sometimes random lines get connected
+    
     private static PathD Connect(Dictionary<PointD, PathD> connections, PathD path)
     {
         if (connections.ContainsKey(path.Last()))
         {
             var tail = connections[path.Last()];
             connections.Remove(path.Last());
+            
             for (var i = 1; i < tail.Count; i++) path.Add(tail[i]);
-
-            path = Connect(connections, path);
+            return Connect(connections, path);
         }
         
         if (connections.ContainsKey(path.First()))
         {
-            PathD head = connections[path.First()];
+            var tail = connections[path.First()];
             connections.Remove(path.First());
-            for (int i = 1; i < path.Count; i++)
-            {
-                head.Add(path[i]);
-            }
-
-            path = Connect(connections, head);
+            
+            //this one took me an embarrassingly long time to realise
+            path.Reverse();
+            
+            for (var i = 1; i < tail.Count; i++) path.Add(tail[i]);
+            return Connect(connections, path);
         }
+        
+        
         return path;
     }
 
-
+    static void writePath(PathD path)
+    {
+        Console.WriteLine("==================================================");
+        foreach (var point in path)
+        {
+            Console.WriteLine(point.x + ", " + point.y);
+        }
+        Console.WriteLine("==================================================");
+    }
     public static PathsD ErodeAndShell(PathsD slice, double nozzleWidth, int nrShells)
     {
         Console.WriteLine("eroding");

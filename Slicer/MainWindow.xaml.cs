@@ -24,8 +24,10 @@ namespace Slicer
             Figure = new List<PathsD>();
             _speed = 0.4;
             _shells = 2;
+            _genCode = true;
         }
 
+        private bool _genCode;
         private int _shells;
         private double _speed;
         public  double  Speed
@@ -68,8 +70,11 @@ namespace Slicer
                 CuttingPlane.Width = planeSize;
 
                 Figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
-                GCodeHandler gCodeHandler = new GCodeHandler();
-                gCodeHandler.GenerateGCodeModel(Figure, _speed);
+                if (_genCode)
+                {
+                    GCodeHandler gCodeHandler = new GCodeHandler();
+                    gCodeHandler.GenerateGCodeModel(Figure, _speed);
+                }
             }
             
         }
@@ -148,8 +153,11 @@ namespace Slicer
             if (mesh != null)
             {
                 Figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
-                GCodeHandler gCodeHandler = new GCodeHandler();
-                gCodeHandler.GenerateGCodeModel(Figure, _speed);
+                if (_genCode)
+                {
+                    GCodeHandler gCodeHandler = new GCodeHandler();
+                    gCodeHandler.GenerateGCodeModel(Figure, _speed);
+                }
             }
             
             double height = CuttingPlane.Content.Transform.Value.OffsetZ;
