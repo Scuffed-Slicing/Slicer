@@ -66,6 +66,8 @@ namespace Slicer
                 CuttingPlane.Width = planeSize;
 
                 Figure = SlicerHandler.SliceAll(mesh, _speed);
+                GCodeHandler gCodeHandler = new GCodeHandler();
+                gCodeHandler.GenerateGCodeModel(Figure, _speed);
             }
             
         }
@@ -115,7 +117,7 @@ namespace Slicer
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
             // printSlice(slice);
             GCodeHandler gCodeHandler = new GCodeHandler();
-            gCodeHandler.GenerateGCode(slice);
+            gCodeHandler.GenerateGCodeSlice(slice, _speed);
             PopupWindow popup = new PopupWindow(SlicerHandler.ErodeAndShell(slice, _speed, 4) , ModelHandler.GetMeshSize(mesh));
             
             popup.ShowDialog();
