@@ -38,6 +38,7 @@ namespace Slicer
             NozzleWidth.DataContext = this;
             this.DataContext = this;
             Figure = new List<PathsD>();
+            _speed = 0.4;
         }
 
         private double _speed;
@@ -187,10 +188,18 @@ namespace Slicer
                 }
                 
                 //empty groups and single points can be ignored
-                if (convPoints.Count > 1)
+                if (convPoints.Count < 2)
                 {
-                    output.Add(new PathD(convPoints));
+                    continue;
                 }
+                //sometimes a line that is the same point twice gets formed
+                if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y)
+                {
+                    continue;
+                }
+                
+                output.Add(new PathD(convPoints));
+                
                 
             }
             
@@ -209,6 +218,7 @@ namespace Slicer
             float y2 = (float) p2.Y;
             
             return new Point3D(Double.Round(x1 + t * (x2 - x1), 2), Double.Round(y1 + t * (y2 - y1),2), height);
+            // return new Point3D(x1 + t * (x2 - x1), y1 + t * (y2 - y1), height);
         }
 
 
@@ -262,16 +272,34 @@ namespace Slicer
             Console.WriteLine(maxHeight);
             while (height <= maxHeight)
             {
-                figure.Add(connectPaths(FindIntersectionPointsAtHeight(mesh, height + Double.Epsilon)));
-                Console.WriteLine(height);
+                height = double.Round(height, 2);
+                PathsD test = FindIntersectionPointsAtHeight(mesh, height + Double.Epsilon);
+                // printSlice(test);
+                figure.Add(connectPaths(test));
+                // printSlice(figure.Last());
                 height += _speed;
             }
 
             return figure;
         }
+
+        private void printSlice(PathsD slices)
+        {
+            Console.WriteLine("===========================================================");
+            foreach (var slice in slices)
+            {
+                foreach (var point in slice)
+                {
+                    Console.WriteLine(point.x + ", " + point.y);
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine("===========================================================");
+        }
         private void showSlice(PathsD slice)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
+            printSlice(slice);
             PopupWindow popup = new PopupWindow(slice, GetMeshSize(mesh));
             popup.ShowDialog();
         }

@@ -11,18 +11,23 @@ public partial class PopupWindow : Window
         InitializeComponent();
         foreach (var path in slice)
         {
-            Line line = new Line();
+            for (int i = 0; i < path.Count; i++)
+            {
+                Line line = new Line();
             
-            line.Stroke = System.Windows.Media.Brushes.Black;
-            line.StrokeThickness = 2;
+                line.Stroke = System.Windows.Media.Brushes.Black;
+                line.StrokeThickness = 2;
             
-            line.X1 = (offset + path[0].x) * 5;
-            line.Y1 = (offset + path[0].y) * 5;
+                line.X1 = (offset + path[i].x) * 5;
+                line.Y1 = (offset + path[i].y) * 5;
             
-            line.X2 = (offset + path[1].x) * 5;
-            line.Y2 = (offset + path[1].y) * 5;
+                line.X2 = (offset + path[(i + 1) % path.Count].x) * 5;
+                line.Y2 = (offset + path[(i + 1) % path.Count].y) * 5;
 
-            Canvas.Children.Add(line);
+                Canvas.Children.Add(line);
+                
+            }
+
         }
     }
 }
