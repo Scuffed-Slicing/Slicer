@@ -96,7 +96,7 @@ namespace Slicer
             Point3DCollection points = mesh.Positions;
             Point3DCollection normal = new Point3DCollection();
             
-            double lowestZ = 0;
+            double lowestZ = double.MaxValue;
             double avgXOffset = 0;
             double avgYOffset = 0;
             foreach (var point in points)
@@ -145,11 +145,11 @@ namespace Slicer
 
             foreach (var point in mesh.Positions)
             {
-                zmax = double.Max(zmax, point.X);
-                zmin = double.Min(zmin, point.X);
+                zmax = double.Max(zmax, point.Z);
+                zmin = double.Min(zmin, point.Z);
             }
             
-            return zmax - zmin;
+            return (zmax - zmin);
         }
 
         //make clipper2 paths for model
@@ -157,6 +157,7 @@ namespace Slicer
         private static PathsD FindIntersectionPointsAtHeight(MeshGeometry3D model, double sliceHeight)
         {   
             PathsD output = new PathsD();
+            // Console.WriteLine(sliceHeight);
             for(int i = 0; i < model.TriangleIndices.Count; i+=3){
                 List<Point3D> tri = new List<Point3D>();
                 tri.Add(model.Positions[model.TriangleIndices[i]]);
@@ -193,10 +194,10 @@ namespace Slicer
                     continue;
                 }
                 //sometimes a line that is the same point twice gets formed
-                if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y)
-                {
-                    continue;
-                }
+                // if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y)
+                // {
+                //     continue;
+                // }
                 
                 output.Add(new PathD(convPoints));
                 
@@ -230,8 +231,6 @@ namespace Slicer
             int maxCount = int.MinValue;
             GeometryModel3D maxModel = null;
             foreach (GeometryModel3D model in group.Children) {
-
-                Console.WriteLine(model);
 
                 int count = ((MeshGeometry3D)model.Geometry).Positions.Count;
                 if (maxCount < count) {
@@ -268,15 +267,18 @@ namespace Slicer
             double height = 0;
             double maxHeight = GetMeshHeight(mesh);
             List<PathsD> figure = new List<PathsD>();
-
-            Console.WriteLine(maxHeight);
             while (height <= maxHeight)
             {
                 height = double.Round(height, 2);
-                PathsD test = FindIntersectionPointsAtHeight(mesh, height + Double.Epsilon);
-                // printSlice(test);
+                PathsD test = FindIntersectionPointsAtHeight(mesh, height + double.Epsilon);
+                if (height == 0)
+                {
+                    Console.WriteLine("Count: " + test.Count);     
+                    // printSlice(test);
+                    showSlice(test);
+                }
+
                 figure.Add(connectPaths(test));
-                // printSlice(figure.Last());
                 height += _speed;
             }
 
@@ -299,7 +301,6 @@ namespace Slicer
         private void showSlice(PathsD slice)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            printSlice(slice);
             PopupWindow popup = new PopupWindow(slice, GetMeshSize(mesh));
             popup.ShowDialog();
         }
@@ -331,7 +332,6 @@ namespace Slicer
 
                 path = Connect(connections, path);
             }
-
             return path;
         }
         private void Viewport3D_OnKeyDown(object sender, KeyEventArgs e)
