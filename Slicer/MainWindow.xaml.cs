@@ -89,8 +89,12 @@ namespace Slicer
                 MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
                 Figure = SlicerHandler.sliceAll(mesh, _speed);
             }
-            Console.WriteLine((int) (CuttingPlane.Content.Transform.Value.OffsetZ / _speed));
-            showSlice(Figure[(int) (CuttingPlane.Content.Transform.Value.OffsetZ / _speed)]);
+            int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _speed);
+            Console.WriteLine(printNr);
+            if (printNr <= Figure.Count)
+            {
+                showSlice(Figure[printNr]);
+            }
         }
         
         private void printSlice(PathsD slices)
