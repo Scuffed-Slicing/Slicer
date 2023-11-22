@@ -123,7 +123,7 @@ public static class SlicerHandler
     public static PathsD ErodeAndShell(PathsD slice, double nozzleWidth, int nrShells)
     {
         Console.WriteLine("eroding");
-        var eroded = Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Square, EndType.Square);
+        var eroded = Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Miter, EndType.Square);
         //making multiple shells bug double of amount intended
         // PathsD output = new PathsD();
         // for(int i = 0; i < nrShells; i++){

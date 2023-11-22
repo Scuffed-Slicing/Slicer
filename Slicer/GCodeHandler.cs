@@ -49,33 +49,57 @@ public class GCodeHandler
 
     };
     
-            public void GenerateGCode(PathsD theWay){
+        private void GenerateSlice(PathD p, string loc, bool first, int layer, double nozzlW){
+
+                for (int i = 0; i < p.Count; i++)
+                    {
+                        if(first){
+                            File.AppendAllText(loc, "G1 F1200 X" +p[i].x + " Y" + p[i].y +"; move to layer start point\n");// first move
+                            first = false;
+                        }
+                        else{
+                            File.AppendAllText(loc, "G1 X" +p[i].x + " Y" + p[i].y +" E0.05 ; move to next point\n");// make move
+
+                        }
+                        // Console.WriteLine(p[i].ToString());
+                    }
+                File.AppendAllText(loc, "G1 Z" + layer*nozzlW +" ; move to next Layer\n");
+                File.AppendAllText(loc,";-----------------------LayerDone-------------------\n\n");
+
+        }
+
+
+
+        public void GenerateGCodeModel(List<PathsD> model,double NozzleWidth){
             var loc = "../../../output.gcode";
             File.Delete(loc);
-            // File.Create(loc);
-            
-            //Set settigs
+            //do setup of printer
             File.WriteAllLines(loc, _setuplines);
-            //generate movement for layer
-            bool first = true;
-            foreach(var p  in theWay){
-                for (int i = 0; i < p.Count; i++)
-                {
-                    if(first){
-                        File.AppendAllText(loc, "G1 F1200 X" +p[i].x + " Y" + p[i].y +"; move to layer start point\n");// first move
-                        first = false;
-                    }
-                    else{
-                        File.AppendAllText(loc, "G1 X" +p[i].x + " Y" + p[i].y +" E0.05 ; move to next point\n");// make move
-
-                    }
-                    // Console.WriteLine(p[i].ToString());
+            var counter = 0;
+            foreach(var Layer in model){
+                bool first =true;
+                foreach(var p  in Layer){
+                    first = false;
+                    //generate the slice
+                    GenerateSlice(p, loc, first, counter, NozzleWidth);   
                 }
-                File.AppendAllText(loc,";-----------------------LayerDone-------------------\n\n");
-                
+                counter++;             
             }
             //reset printer
+            File.AppendAllLines(loc, _resetLines);
+        }
 
+
+        public void GenerateGCodeSlice(PathsD TheWay, double NozzleWidth){
+            var loc = "../../../output.gcode";
+            File.Delete(loc);
+            File.WriteAllLines(loc, _setuplines);
+
+
+            foreach(var p in TheWay){
+                GenerateSlice(p, loc, true,0,NozzleWidth);
+
+            }
             File.AppendAllLines(loc, _resetLines);
         }
 }
