@@ -35,8 +35,8 @@ public static class SlicerHandler
         {
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
             ClipperD clip = new ClipperD();
-            clip.AddPaths(slice, PathType.Clip, false);
-            clip.AddPaths(fill, PathType.Subject, false);
+            clip.AddPaths(slice, PathType.Subject, false);
+            clip.AddPaths(fill, PathType.Clip, false);
             
             PathsD sol = new PathsD();
             clip.Execute(ClipType.Intersection, FillRule.NonZero, sol);
@@ -225,7 +225,7 @@ public static class SlicerHandler
         
         PathsD output = new PathsD();
         for(int i = 0; i < nrShells; i++){
-            PathsD temp = Clipper.InflatePaths(eroded, -nozzleWidth * (2 * i), JoinType.Miter, EndType.Polygon);
+            PathsD temp = Clipper.InflatePaths(eroded, -nozzleWidth * i, JoinType.Miter, EndType.Polygon);
             foreach(var path in temp){
                 output.Add(path);
             }
