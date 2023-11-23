@@ -75,36 +75,36 @@ public class GCodeHandler
         ";-----------------------ResetDone-------------------\n\n"
 
     };
-        double _fillemant_Amount = 0;
-        double prev_x = -1;
-        double prev_y = -1;
-        private void GenerateSlice(PathD p, string loc, bool first,double offset, double NozzleWidth){
-                double L = 1;
 
-                // File.AppendAllText(loc, "G1 F1500 E5");
+    private void GenerateSlice(PathD p, string loc, bool first,double offset, double NozzleWidth){
+        double L = 1;
+        File.AppendAllText(loc, "G92 E0  ;Reset Extruder");
+        // File.AppendAllText(loc, "G1 F1500 E5");
+        double fillemantAmount = 1;
+        double prevX = -1;
+        double prevY = -1;
+        
+        for (int i = 0; i < p.Count; i++)
+        {   
+            if(prevX!= -1 && prevY != -1){
+                L= Math.Sqrt(Math.Pow(prevX - p[i].x, 2.0) + Math.Pow(prevY - p[i].y, 2.0));
+                fillemantAmount += NozzleWidth / 2 * NozzleWidth * L / (1.75 / 2 * 1.75 / 2 * Math.PI);
+            }
 
-                for (int i = 0; i < p.Count; i++)
-                    {   if(prev_x!= -1 && prev_y != -1){
-                            L= Math.Sqrt(Math.Pow(prev_x - p[i].x, 2.0) + Math.Pow(prev_y - p[i].y, 2.0));
-                            _fillemant_Amount += NozzleWidth / 2 * NozzleWidth * L / (1.75 / 2 * 1.75 / 2 * Math.PI);
-                        }
+            // if(first){
+            //     File.AppendAllText(loc, "G1 F1500 X" +(p[i].x + offset).ToString(System.Globalization.CultureInfo.InvariantCulture) + " Y" +(p[i].y + offset).ToString(System.Globalization.CultureInfo.InvariantCulture) +"; move to path start point\n");// first move
+            //     first = false;
+            // }                        
+            // else{
+                File.AppendAllText(loc, "G1 X" +(p[i].x + offset).ToString(System.Globalization.CultureInfo.InvariantCulture) + " Y" + (p[i].y + offset).ToString(System.Globalization.CultureInfo.InvariantCulture) + " E" +fillemantAmount.ToString(System.Globalization.CultureInfo.InvariantCulture) + " ; move to next point\n");// make move
 
-                        // if(first){
-                        //     File.AppendAllText(loc, "G1 F1500 X" +(p[i].x + offset).ToString(System.Globalization.CultureInfo.InvariantCulture) + " Y" +(p[i].y + offset).ToString(System.Globalization.CultureInfo.InvariantCulture) +"; move to path start point\n");// first move
-                        //     first = false;
-                        // }                        
-                        // else{
-                            File.AppendAllText(loc, "G1 X" +(p[i].x + offset).ToString(System.Globalization.CultureInfo.InvariantCulture) + " Y" + (p[i].y + offset).ToString(System.Globalization.CultureInfo.InvariantCulture) + " E" +_fillemant_Amount.ToString(System.Globalization.CultureInfo.InvariantCulture) + " ; move to next point\n");// make move
-
-                        // }
-                        prev_x = p[i].x;
-                        prev_y = p[i].y;
-                        // Console.WriteLine(p[i].ToString());
-                    }
-                // File.AppendAllText(loc, "G1 F1500 E-5");
-
-
+            // }
+            prevX = p[i].x;
+            prevY = p[i].y;
+            // Console.WriteLine(p[i].ToString());
         }
+        File.AppendAllText(loc, "G1 F1500 E-1");
+    }
 
 
 

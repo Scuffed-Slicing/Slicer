@@ -181,7 +181,7 @@ namespace Slicer
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(_figure, _speed, ModelHandler.GetMeshSize(mesh));
+                    gCodeHandler.GenerateGCodeModel(_figure, _speed, ModelHandler.GetMeshSize(mesh), _layerHeight);
                 }
             }
             
