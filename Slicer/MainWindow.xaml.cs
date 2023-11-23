@@ -24,8 +24,8 @@ namespace Slicer
             _figure = new List<PathsD>();
             _infill = new List<PathsD>();
             _speed = 0.4;
-            _shells = 2;
-            _genCode = false;
+            _shells = 4;
+            _genCode = true;
             
         }
 
@@ -79,8 +79,12 @@ namespace Slicer
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(_figure, _speed);
+                    gCodeHandler.GenerateGCodeModel(_figure, _speed,ModelHandler.GetMeshSize(mesh));
+                    
+                    GCodeHandler temp = new GCodeHandler();
+                    temp.GenerateGCodeSlice(_figure[4], _speed, ModelHandler.GetMeshSize(mesh));
                 }
+
             }
             
         }
@@ -104,6 +108,7 @@ namespace Slicer
                 MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
                 _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
                 _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed);
+                
             }
             int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _speed);
             Console.WriteLine("printing: " + printNr);
@@ -112,7 +117,9 @@ namespace Slicer
             if (printNr <= _figure.Count && printNr >= 0)
             {
                 ShowSlice(_figure[printNr], _infill[printNr]);
+                
             }
+            GCodeHandler gCodeHandler = new GCodeHandler();
         }
         
         private void printSlice(PathsD slices)
@@ -166,7 +173,7 @@ namespace Slicer
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(_figure, _speed);
+                    gCodeHandler.GenerateGCodeModel(_figure, _speed, ModelHandler.GetMeshSize(mesh));
                 }
             }
             
