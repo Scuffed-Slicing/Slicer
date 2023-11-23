@@ -82,16 +82,7 @@ namespace Slicer
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-
-                    
-                    GCodeHandler temp = new GCodeHandler();
-                    for (var i = 0; i < _figure.Count(); i++){
-                        foreach (var p in _infill[i])
-                        {   
-                            _figure[i].Add(p);
-                        }
-                    }
-                    gCodeHandler.GenerateGCodeModel(_figure, _speed,ModelHandler.GetMeshSize(mesh), _layerHeight);
+                    gCodeHandler.GenerateGCodeModel(_figure, _infill, _speed,ModelHandler.GetMeshSize(mesh), _layerHeight);
 
                 }
 
@@ -183,7 +174,7 @@ namespace Slicer
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(_figure, _speed, ModelHandler.GetMeshSize(mesh), _layerHeight);
+                    gCodeHandler.GenerateGCodeModel(_figure, _infill, _speed, ModelHandler.GetMeshSize(mesh), _layerHeight);
                 }
             }
             
