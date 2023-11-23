@@ -108,7 +108,7 @@ public class GCodeHandler
 
 
 
-        public void GenerateGCodeModel(List<PathsD> model,double NozzleWidth, double offset){
+        public void GenerateGCodeModel(List<PathsD> model,double NozzleWidth, double offset, double LayerHeight){
             var loc = "../../../output.gcode";
             File.Delete(loc);
             //do setup of printer
@@ -121,7 +121,7 @@ public class GCodeHandler
                     //generate the slice
                     GenerateSlice(p, loc, first, offset, NozzleWidth);   
                 }
-                // File.AppendAllText(loc, "G1 Z" + counter*NozzleWidth +" E-10 ; move to next Layer\n");
+                File.AppendAllText(loc, "G1 Z" + counter*LayerHeight +" E-10 ; move to next Layer\n");
                 File.AppendAllText(loc,";-----------------------LayerDone-------------------\n\n");
                 counter++;             
             }

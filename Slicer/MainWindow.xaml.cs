@@ -35,6 +35,8 @@ namespace Slicer
         private bool _genCode;
         private int _shells;
         private double _speed;
+        private double _LayerHeight = 0.2;
+
         public  double  Speed
         {
             get
@@ -79,7 +81,8 @@ namespace Slicer
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(_figure, _speed,ModelHandler.GetMeshSize(mesh));
+                    gCodeHandler.GenerateGCodeModel(_figure, _speed,ModelHandler.GetMeshSize(mesh), _LayerHeight);
+
                     
                     GCodeHandler temp = new GCodeHandler();
                     foreach (var fill in _infill[4])
