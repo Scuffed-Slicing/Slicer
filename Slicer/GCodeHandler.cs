@@ -75,14 +75,16 @@ public class GCodeHandler
         ";-----------------------ResetDone-------------------\n\n"
 
     };
-
-    private void GenerateSlice(PathD p, string loc, bool first,double offset, double NozzleWidth){
-        double L = 1;
-        File.AppendAllText(loc, "G92 E0  ;Reset Extruder");
-        // File.AppendAllText(loc, "G1 F1500 E5");
         double fillemantAmount = 1;
         double prevX = -1;
         double prevY = -1;
+    private void GenerateSlice(PathD p, string loc, bool first,double offset, double NozzleWidth){
+        double L = 1;
+        // File.AppendAllText(loc, "G92 E0  ;Reset Extruder");
+        // File.AppendAllText(loc, "G1 F1500 E5");
+        //         double fillemantAmount = 1;
+        // double prevX = -1;
+        // double prevY = -1;
         
         for (int i = 0; i < p.Count; i++)
         {   
@@ -103,7 +105,7 @@ public class GCodeHandler
             prevY = p[i].y;
             // Console.WriteLine(p[i].ToString());
         }
-        File.AppendAllText(loc, "G1 F1500 E-1");
+        // File.AppendAllText(loc, "G1 F1500 E-1");
     }
 
 

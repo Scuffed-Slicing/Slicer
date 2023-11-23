@@ -77,20 +77,22 @@ namespace Slicer
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
                 
-                _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                _figure = SlicerHandler.SliceAll(mesh, _speed,  _layerHeight, _shells);
                 _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed, _shells);
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(_figure, _speed,ModelHandler.GetMeshSize(mesh), _layerHeight);
 
                     
                     GCodeHandler temp = new GCodeHandler();
-                    foreach (var fill in _infill[4])
-                    {
-                        _figure[4].Add(fill);
+                    for (var i = 0; i < _figure.Count(); i++){
+                        foreach (var p in _infill[i])
+                        {   
+                            _figure[i].Add(p);
+                        }
                     }
-                    temp.GenerateGCodeSlice(_figure[4], _speed, ModelHandler.GetMeshSize(mesh));
+                    gCodeHandler.GenerateGCodeModel(_figure, _speed,ModelHandler.GetMeshSize(mesh), _layerHeight);
+
                 }
 
             }
@@ -114,7 +116,7 @@ namespace Slicer
             if (_figure.Count == 0)
             {
                 MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-                _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                _figure = SlicerHandler.SliceAll(mesh, _speed, _layerHeight, _shells);
                 _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed, _shells);
                 
             }
@@ -176,7 +178,7 @@ namespace Slicer
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
             if (mesh != null)
             {
-                _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
+                _figure = SlicerHandler.SliceAll(mesh, _speed, _layerHeight, _shells);
                 _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed, _shells);
                 if (_genCode)
                 {

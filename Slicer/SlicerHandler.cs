@@ -8,7 +8,7 @@ namespace Slicer;
 
 public static class SlicerHandler
 {
-    public static List<PathsD> SliceAll(MeshGeometry3D mesh, double nozzleWidth, int shells)
+    public static List<PathsD> SliceAll(MeshGeometry3D mesh, double nozzleWidth, double layerHeight, int shells)
     {
         double height = 0;
         var maxHeight = ModelHandler.GetMeshHeight(mesh);
@@ -21,7 +21,7 @@ public static class SlicerHandler
             slice = connectPaths(slice);
             slice = ErodeAndShell(slice, nozzleWidth, shells);
             figure.Add(slice);
-            height += nozzleWidth;
+            height += layerHeight;
         }
 
         return figure;
