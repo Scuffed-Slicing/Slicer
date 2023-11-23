@@ -19,7 +19,7 @@ public static class SlicerHandler
             height = double.Round(height, 2);
             var slice = FindIntersectionPointsAtHeight(mesh, height + double.Epsilon);
             slice = connectPaths(slice);
-            // slice = ErodeAndShell(slice, nozzleWidth, shells);
+            slice = ErodeAndShell(slice, nozzleWidth, shells);
             figure.Add(slice);
             height += nozzleWidth;
         }
@@ -30,12 +30,18 @@ public static class SlicerHandler
     public static List<PathsD> GenerateAllInfill(List<PathsD> figure, double fillPercent, double squareSize, double nozzleWidth)
     {
         var infills = new List<PathsD>();
+        
         foreach (var slice in figure)
         {
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
-            //bug? idk this just refuses to intersect
-            var pat = Clipper.Intersect(slice, fill, FillRule.Positive);
-            infills.Add(pat);
+            ClipperD clip = new ClipperD();
+            clip.AddPaths(slice, PathType.Clip, false);
+            clip.AddPaths(fill, PathType.Subject, false);
+            
+            PathsD sol = new PathsD();
+            clip.Execute(ClipType.Intersection, FillRule.NonZero, sol);
+
+            infills.Add(sol);
         }
 
         return infills;
@@ -45,20 +51,68 @@ public static class SlicerHandler
         /* fill-percent is the inverse of the amount of room we need to leave to get said percent
          * and then we divide by root(2) so we can add that nr to the x and y coord
          */
-        double spacing = (double.Pow(fillPercent, -1) * nozzleWidth) / double.RootN(2, 2);
+        // double spacing = (double.Pow(fillPercent, -1) * nozzleWidth) / double.RootN(2, 2);
+        double spacing = 5;
+        double miniOffset = 0.01;
         PathsD pattern = new PathsD();
+        PathsD row = new PathsD();
+        
 
         PointD centre = new PointD(-squareSize / 2, -squareSize / 2);
         PointD end = new PointD(squareSize / 2, squareSize / 2);
-        while (centre.x <= end.x)
+        
+        while (centre.x <= end.x + spacing)
         {
-            PointD topLine = new PointD(centre.x - squareSize / 2, centre.y + squareSize / 2);
-            PointD botLine = new PointD(centre.x + squareSize / 2, centre.y - squareSize / 2);
-            
-            pattern.Add(new PathD{topLine, botLine});
+            // PointD tr = new PointD(centre.x + spacing / 2, centre.y + spacing / 2);
+            // PointD tl = new PointD(centre.x - spacing / 2, centre.y + spacing / 2);
+            // PointD br = new PointD(centre.x + spacing / 2, centre.y - spacing / 2);
+            // PointD bl = new PointD(centre.x - spacing / 2, centre.y - spacing / 2);
+            //
+            // PathD square = new PathD{tr, br, bl, tl};
 
-            centre.x += spacing;
-            centre.y += spacing;
+            PointD t = new PointD(centre.x, centre.y + spacing / 2);
+            PointD l = new PointD(centre.x - spacing / 2, centre.y);
+            PointD b = new PointD(centre.x, centre.y - spacing / 2);
+            PointD r = new PointD(centre.x + spacing / 2, centre.y );
+            
+            PathD square = new PathD{t, l, b, r};
+
+            row.Add(square);
+            
+            centre.x += spacing + miniOffset;
+        }
+        
+        foreach (var square in row)
+        {
+            pattern.Add(square);
+        }
+
+        // return pattern;
+
+        var linenr = 1;
+        centre.y += (spacing + miniOffset);
+        while (centre.y <= end.y + spacing)
+        {
+            PathsD copyRow = new PathsD();
+            for (int i = 0; i < row.Count; i++)
+            {
+                var squareCpy = new PathD();
+
+                foreach (var square in row[i])
+                {
+                    squareCpy.Add(new PointD(square.x, square.y + (spacing + miniOffset) * linenr));
+                }
+                
+                copyRow.Add(squareCpy);
+            }
+            
+            foreach (var square in copyRow)
+            {
+                pattern.Add(square);
+            }
+
+            linenr++;
+            centre.y += spacing + miniOffset;
         }
 
         return pattern;

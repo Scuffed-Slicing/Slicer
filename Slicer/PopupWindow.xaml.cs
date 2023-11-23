@@ -24,22 +24,23 @@ public partial class PopupWindow : Window
         };
         var brush = 0;
         int zoom = 5;
+
         foreach (var path in slice)
         {
             //shells
             for (int j = 0; j < path.Count; j++)
             {
                 Line line = new Line();
-
+        
                 line.Stroke = strokes[brush % strokes.Count];
                 line.StrokeThickness = 2;
-
+        
                 line.X1 = (offset + path[j].x) * zoom;
                 line.Y1 = (offset + path[j].y) * zoom;
-
+        
                 line.X2 = (offset + path[(j + 1) % path.Count].x) * zoom;
                 line.Y2 = (offset + path[(j + 1) % path.Count].y) * zoom;
-
+        
                 Canvas.Children.Add(line);
             }
             brush++;
@@ -48,18 +49,18 @@ public partial class PopupWindow : Window
 
         //infill
         foreach (var path in infill){
-            for (int j = 0; j < path.Count; j += 2)
+            for (int j = 0; j < path.Count; j++)
             {
                 Line line = new Line();
             
-                line.Stroke = System.Windows.Media.Brushes.Gray;
+                line.Stroke = System.Windows.Media.Brushes.Pink;
                 line.StrokeThickness = 1;
                 
                 line.X1 = (offset + path[j].x) * zoom;
                 line.Y1 = (offset + path[j].y) * zoom;
                 
-                line.X2 = (offset + path[j + 1].x) * zoom;
-                line.Y2 = (offset + path[j + 1].y) * zoom;
+                line.X2 = (offset + path[(j + 1) % path.Count].x) * zoom;
+                line.Y2 = (offset + path[(j + 1) % path.Count].y) * zoom;
 
                 Canvas.Children.Add(line);
             }
