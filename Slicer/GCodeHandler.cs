@@ -81,7 +81,7 @@ public class GCodeHandler
         private void GenerateSlice(PathD p, string loc, bool first,double offset, double NozzleWidth){
                 double L = 1;
 
-                File.AppendAllText(loc, "G1 F1500 E5");
+                // File.AppendAllText(loc, "G1 F1500 E5");
 
                 for (int i = 0; i < p.Count; i++)
                     {   if(prev_x!= -1 && prev_y != -1){
@@ -101,7 +101,7 @@ public class GCodeHandler
                         prev_y = p[i].y;
                         // Console.WriteLine(p[i].ToString());
                     }
-                File.AppendAllText(loc, "G1 F1500 E-5");
+                // File.AppendAllText(loc, "G1 F1500 E-5");
 
 
         }
