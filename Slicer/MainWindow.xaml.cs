@@ -75,13 +75,17 @@ namespace Slicer
                 CuttingPlane.Width = planeSize;
                 
                 _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
-                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed);
+                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed, _shells);
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();
                     gCodeHandler.GenerateGCodeModel(_figure, _speed,ModelHandler.GetMeshSize(mesh));
                     
                     GCodeHandler temp = new GCodeHandler();
+                    foreach (var fill in _infill[4])
+                    {
+                        _figure[4].Add(fill);
+                    }
                     temp.GenerateGCodeSlice(_figure[4], _speed, ModelHandler.GetMeshSize(mesh));
                 }
 
@@ -107,7 +111,7 @@ namespace Slicer
             {
                 MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
                 _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
-                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed);
+                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed, _shells);
                 
             }
             int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _speed);
@@ -169,7 +173,7 @@ namespace Slicer
             if (mesh != null)
             {
                 _figure = SlicerHandler.SliceAll(mesh, _speed, _shells);
-                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed);
+                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _speed, _shells);
                 if (_genCode)
                 {
                     GCodeHandler gCodeHandler = new GCodeHandler();

@@ -27,15 +27,16 @@ public static class SlicerHandler
         return figure;
     }
 
-    public static List<PathsD> GenerateAllInfill(List<PathsD> figure, double fillPercent, double squareSize, double nozzleWidth)
+    public static List<PathsD> GenerateAllInfill(List<PathsD> figure, double fillPercent, double squareSize, double nozzleWidth, int shells)
     {
         var infills = new List<PathsD>();
         
         foreach (var slice in figure)
         {
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
+            var eroded = Clipper.InflatePaths(slice, -nozzleWidth * (shells + 0.5), JoinType.Miter, EndType.Polygon);
             ClipperD clip = new ClipperD();
-            clip.AddPaths(slice, PathType.Subject, false);
+            clip.AddPaths(eroded, PathType.Subject, false);
             clip.AddPaths(fill, PathType.Clip, false);
             
             PathsD sol = new PathsD();
@@ -52,7 +53,7 @@ public static class SlicerHandler
          * and then we divide by root(2) so we can add that nr to the x and y coord
          */
         // double spacing = (double.Pow(fillPercent, -1) * nozzleWidth) / double.RootN(2, 2);
-        double spacing = 5;
+        double spacing = 10;
         double miniOffset = 0.01;
         PathsD pattern = new PathsD();
         PathsD row = new PathsD();
