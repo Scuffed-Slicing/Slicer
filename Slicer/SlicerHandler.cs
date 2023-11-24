@@ -41,7 +41,11 @@ public static class SlicerHandler
             
             PathsD sol = new PathsD();
             clip.Execute(ClipType.Intersection, FillRule.NonZero, sol);
-
+            
+            foreach (var path in sol)
+            {
+                path.Add(path.First());
+            }
             infills.Add(sol);
         }
 

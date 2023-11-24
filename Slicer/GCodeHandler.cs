@@ -81,18 +81,19 @@ public class GCodeHandler
     double prevX = -1;
     double prevY = -1;
     private void GenerateSlice(PathD p, string loc, bool first,double offset, double nozzleWidth){
-        double L = 1;
         // File.AppendAllText(loc, "G92 E0  ;Reset Extruder");
         // File.AppendAllText(loc, "G1 F1500 E5");
         //         double fillemantAmount = 1;
         // double prevX = -1;
         // double prevY = -1;
         
+        _filamentAmount += 1;
         for (int i = 0; i < p.Count; i++)
         {   
-            if(prevX!= -1 && prevY != -1){
-                L= Math.Sqrt(Math.Pow(prevX - p[i].x, 2.0) + Math.Pow(prevY - p[i].y, 2.0));
-                _filamentAmount += nozzleWidth / 2 * nozzleWidth * L / (1.75 / 2 * 1.75 / 2 * Math.PI);
+            if(prevX!= -1 && prevY != -1)
+            {
+                var l = Math.Sqrt(Math.Pow(prevX - p[i].x, 2.0) + Math.Pow(prevY - p[i].y, 2.0));
+                _filamentAmount += nozzleWidth / 2 * nozzleWidth * l / (1.75 / 2 * 1.75 / 2 * Math.PI);
             }
 
             // if(first){
@@ -107,7 +108,8 @@ public class GCodeHandler
             prevY = p[i].y;
             // Console.WriteLine(p[i].ToString());
         }
-        // File.AppendAllText(loc, "G1 F1500 E-1");
+        _filamentAmount -= 1;
+        File.AppendAllText(loc, "G1 F1500 E" + _filamentAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)+"\n");
     }
     private void GenerateFill(PathD p, string loc, bool first,double offset, double nozzleWidth){
         //mb l needs to go +1
@@ -117,6 +119,7 @@ public class GCodeHandler
         //         double fillemantAmount = 1;
         // double prevX = -1;
         // double prevY = -1;
+        _filamentAmount += 1;
         for (int i = 0; i < p.Count; i++)
         {   
             if(i != 0){
@@ -137,7 +140,8 @@ public class GCodeHandler
             // Console.WriteLine(p[i].ToString());
         }
 
-        // File.AppendAllText(loc, "G1 F1500 E-1\n");
+        _filamentAmount -= 1;
+        File.AppendAllText(loc, "G1 F1500 E" + _filamentAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)+"\n");
     }
 
 
@@ -153,11 +157,11 @@ public class GCodeHandler
             {
                 var first = true;
                 
-                // foreach(var p  in model[i]){
-                //     //generate the slice
-                //     GenerateSlice(p, loc, first, offset, NozzleWidth);
-                //     first = false;
-                // }
+                foreach(var p  in model[i]){
+                    //generate the slice
+                    GenerateSlice(p, loc, first, offset, NozzleWidth);
+                    first = false;
+                }
                 
                 first = true;
                 foreach(var p  in infill[i]){
@@ -175,16 +179,25 @@ public class GCodeHandler
         }
 
 
-        public void GenerateGCodeSlice(PathsD TheWay, double NozzleWidth, double offset){
+        public void GenerateGCodeSlice(PathsD figure, PathsD infill, double nozzleWidth, double offset){
             var loc = "../../../output.gcode";
             File.Delete(loc);
             File.WriteAllLines(loc, _setuplines);
 
 
-            foreach(var p in TheWay){
-                GenerateSlice(p, loc, true,offset, NozzleWidth);
+            foreach(var p in figure){
+                p.Add(p.First());
+                GenerateSlice(p, loc, true, offset, nozzleWidth);
+                
             }
+
+            foreach (var p in infill)
+            {
+                GenerateFill(p, loc, true, offset, nozzleWidth);
+            }
+            
             // File.AppendAllText(loc, "G1 Z" + layer*nozzlW +" ; move to next Layer\n");
+            
             File.AppendAllText(loc,";-----------------------LayerDone-------------------\n\n");
             File.AppendAllLines(loc, _resetLines);
         }

@@ -24,7 +24,7 @@
                 </TextBlock.Text>
             </TextBlock>
             <xctk:DoubleUpDown Grid.Column="1" FormatString="F1" Increment="0.1" Minimum="0.1" DefaultValue="0.4"
-                               CultureInfo="en-US" Value="{Binding Speed}" x:Name="NozzleWidth" />
+                               CultureInfo="en-US" Value="{Binding NozzleWidth}" x:Name="NozWidth" />
         </Grid>
         <h:HelixViewport3D BorderThickness="1" BorderBrush="Black" Grid.Row="1" KeyDown="Viewport3D_OnKeyDown"
                            ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
