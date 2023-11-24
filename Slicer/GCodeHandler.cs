@@ -77,7 +77,7 @@ public class GCodeHandler
 
     };
 
-    private double _filamentAmount = 0;
+    private double _filamentAmount = -1;
     double prevX = -1;
     double prevY = -1;
     private void GenerateSlice(PathD p, string loc, bool first,double offset, double nozzleWidth){
@@ -88,6 +88,8 @@ public class GCodeHandler
         // double prevY = -1;
         
         _filamentAmount += 1;
+        File.AppendAllText(loc, "G1 F1500 E" + _filamentAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)+"\n");
+        
         for (int i = 0; i < p.Count; i++)
         {   
             if(prevX!= -1 && prevY != -1)

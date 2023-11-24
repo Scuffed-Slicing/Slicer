@@ -34,7 +34,7 @@ public static class SlicerHandler
         foreach (var slice in figure)
         {
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
-            var eroded = Clipper.InflatePaths(slice, -nozzleWidth * (shells + 0.25), JoinType.Miter, EndType.Polygon);
+            var eroded = Clipper.InflatePaths(slice, -nozzleWidth * (shells + 0.1), JoinType.Miter, EndType.Polygon);
             ClipperD clip = new ClipperD();
             clip.AddPaths(eroded, PathType.Subject, false);
             clip.AddPaths(fill, PathType.Clip, false);
