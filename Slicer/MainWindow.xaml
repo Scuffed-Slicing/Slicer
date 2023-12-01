@@ -15,23 +15,38 @@
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="0.5*" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0">
                 <TextBlock.Text>
-                    Nozzle Width:
+                    Nozzle Width:  
                 </TextBlock.Text>
             </TextBlock>
             <xctk:DoubleUpDown Grid.Column="1" FormatString="F1" Increment="0.1" Minimum="0.1" DefaultValue="0.4"
                                CultureInfo="en-US" Value="{Binding NozzleWidth}" x:Name="NozWidth" />
+            
+            <TextBlock Grid.Column="2">
+                <TextBlock.Text>
+                    Shells:  
+                </TextBlock.Text>
+            </TextBlock>
+            <xctk:IntegerUpDown Grid.Column="3" Increment="1" Minimum="1" DefaultValue="1"
+                                Value="{Binding Shells}" x:Name="ShellUpDown"/>
+            <TextBlock Grid.Column="4">
+                <TextBlock.Text>
+                    Gen G-code:  
+                </TextBlock.Text>
+            </TextBlock>
+            <CheckBox Grid.Column="5" IsChecked="{Binding GenCode}" x:Name="CodeBool"/>
         </Grid>
         <h:HelixViewport3D BorderThickness="1" BorderBrush="Black" Grid.Row="1" KeyDown="Viewport3D_OnKeyDown"
                            ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
-
-            <h:HelixViewport3D.InputBindings>
-                <KeyBinding Command="{Binding MoveSlicerUp}" Key="R" />
-            </h:HelixViewport3D.InputBindings>
+            
 
             <!-- Remember to add light to the scene -->
             <h:SunLight />

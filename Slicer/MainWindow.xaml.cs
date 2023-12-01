@@ -20,12 +20,14 @@ namespace Slicer
         {
             InitializeComponent();
             NozWidth.DataContext = this;
-            this.DataContext = this;
+            ShellUpDown.DataContext = this;
+            CodeBool.DataContext = this;
+            
             _figure = new List<PathsD>();
             _infill = new List<PathsD>();
             _nozzleWidth = 0.4;
-            _shells = 4;
-            _genCode = true;
+            _shells = 1;
+            _genCode = false;
             _layerHeight = 0.2;
             
         }
@@ -48,8 +50,19 @@ namespace Slicer
                 NozzleWidth_OnValueChanged(_nozzleWidth);
             }
         }
-        
-        
+
+        public int Shells
+        {
+            get => _shells;
+
+            set => _shells = value;
+        }
+
+        public bool GenGcode
+        {
+            get => _genCode;
+            set => _genCode = value;
+        }
         private void ImportFile(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog explorer = new Microsoft.Win32.OpenFileDialog();
@@ -77,15 +90,6 @@ namespace Slicer
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
                 
-                _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth,  _layerHeight, _shells);
-                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
-                if (_genCode)
-                {
-                    GCodeHandler gCodeHandler = new GCodeHandler();
-                    // gCodeHandler.GenerateGCodeModel(_figure, _infill, _speed,ModelHandler.GetMeshSize(mesh), _layerHeight);
-                    gCodeHandler.GenerateGCodeSlice(_figure[0], _infill[0],  _nozzleWidth,ModelHandler.GetMeshSize(mesh));
-
-                }
 
             }
             
@@ -105,23 +109,27 @@ namespace Slicer
                 return;
             }
             
-            if (_figure.Count == 0)
+
+            MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
+            
+            _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth, _layerHeight, _shells);
+            _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
+            
+            if (_genCode)
             {
-                MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-                _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth, _layerHeight, _shells);
-                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
-                
+                GCodeHandler gCodeHandler = new GCodeHandler();
+                gCodeHandler.GenerateGCodeModel(_figure, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
             }
+
+            
             int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _nozzleWidth);
-            Console.WriteLine("printing: " + printNr);
-            Console.WriteLine("infill total: " + _infill.Count);
-            Console.WriteLine("infill total lines: " + _infill[0].Count);
             if (printNr <= _figure.Count && printNr >= 0)
             {
-                ShowSlice(_figure[printNr], _infill[printNr]);
-                
+                ShowSlice(printNr);
+            } else {
+                ShowSlice(0);
             }
-            GCodeHandler gCodeHandler = new GCodeHandler();
+            
         }
         
         private void printSlice(PathsD slices)
@@ -137,10 +145,10 @@ namespace Slicer
             }
             Console.WriteLine("===========================================================");
         }
-        private void ShowSlice(PathsD slice, PathsD infill)
+        private void ShowSlice(int printNr)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            PopupWindow popup = new PopupWindow(slice , infill, ModelHandler.GetMeshSize(mesh));
+            PopupWindow popup = new PopupWindow(_figure , _infill, ModelHandler.GetMeshSize(mesh), printNr);
             
             popup.ShowDialog();
         }

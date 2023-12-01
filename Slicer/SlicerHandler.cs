@@ -19,7 +19,7 @@ public static class SlicerHandler
         {
             height = double.Round(height, 2);
             var slice = FindIntersectionPointsAtHeight(mesh, height + double.Epsilon);
-            slice = connectPaths(slice);
+            slice = ConnectPaths(slice);
             slice = ErodeAndShell(slice, nozzleWidth, shells);
             figure.Add(slice);
             height += layerHeight;
@@ -31,20 +31,22 @@ public static class SlicerHandler
     public static List<PathsD> GenerateAllInfill(List<PathsD> figure, double fillPercent, double squareSize, double nozzleWidth, int shells)
     {
         var infills = new List<PathsD>();
-        
+
         foreach (var slice in figure)
         {
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
-            var eroded = Clipper.InflatePaths(slice, -nozzleWidth * (shells + 0.1), JoinType.Miter, EndType.Polygon);
+            var eroded = Clipper.InflatePaths(slice, - nozzleWidth * (0.5 + shells - 1) , JoinType.Miter, EndType.Polygon);
             ClipperD clip = new ClipperD();
-            // Clipper.SimplifyPaths(eroded, 1);
+
+            clip.AddOpenSubject(fill);
+            clip.AddClip(eroded);
             
-            clip.AddClip(fill);
-            clip.AddSubject(slice);
+            PathsD solThrow = new PathsD();
             PathsD sol = new PathsD();
-            clip.Execute(ClipType.Intersection, FillRule.EvenOdd, sol);
             
+            clip.Execute(ClipType.Intersection, FillRule.NonZero, solThrow, sol);
             Console.WriteLine(sol.Count);
+            
             infills.Add(sol);
         }
 
@@ -80,15 +82,13 @@ public static class SlicerHandler
         {
             PointD topLine = new PointD(centre.x + squareSize / 2, centre.y + squareSize / 2);
             PointD botLine = new PointD(centre.x - squareSize / 2, centre.y - squareSize / 2);
-            
             pattern.Add(new PathD{topLine, botLine});
 
             centre.x += spacing;
             centre.y -= spacing;
         }
-        
-        return Clipper.SimplifyPaths(pattern, 0.025, false);
 
+        return pattern;
     }
     public static PathsD FindIntersectionPointsAtHeight(MeshGeometry3D model, double sliceHeight)
     {
@@ -116,12 +116,14 @@ public static class SlicerHandler
             foreach (var point in pointsOnHeight) convPoints.Add(new PointD(point.X, point.Y));
 
             //empty groups and single points can be ignored
-            if (convPoints.Count < 2) continue;
+            if (convPoints.Count == 0) continue;
             
-            // sometimes a line that is the same point twice gets formed
-            if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y) continue;
-         
-            output.Add(new PathD(convPoints));
+            // // sometimes a line that is the same point twice gets formed
+            // if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y) continue;
+            
+            var temp = new PathD(convPoints);
+            // output.Add(temp);
+            output.Add(Clipper.SimplifyPath(temp, 0.025));
         }
 
         return output;
@@ -131,18 +133,18 @@ public static class SlicerHandler
     {
         //rand waarde waar z1 en z2 gelijk zijn uitgehaald door voorgaande code
         var t = (height - p1.Z) / (p2.Z - p1.Z);
+        
+        var x1 = p1.X;
+        var x2 = p2.X;
 
-        //convert to float and add a miniscule value to height so the plane never intersects with a point
-        var x1 = (float)p1.X;
-        var x2 = (float)p2.X;
+        var y1 = p1.Y;
+        var y2 = p2.Y;
 
-        var y1 = (float)p1.Y;
-        var y2 = (float)p2.Y;
-
-        return new Point3D(double.Round(x1 + t * (x2 - x1), 2), double.Round(y1 + t * (y2 - y1), 2), height);
+        // return new Point3D(x1 + t * (x2 - x1), y1 + t * (y2 - y1), height);
+        return new Point3D(double.Round(x1 + t * (x2 - x1), 6), double.Round(y1 + t * (y2 - y1), 6), height);
     }
     
-    private static PathsD connectPaths(PathsD paths)
+    private static PathsD ConnectPaths(PathsD paths)
     {
         var connections = new Dictionary<PointD, PathD>();
         foreach (var path in paths)
@@ -151,15 +153,16 @@ public static class SlicerHandler
             connections.Add(connected.First(), connected);
         }
 
+
         PathsD test = new PathsD ( connections.Values );
-        test = Clipper.SimplifyPaths(test, 0.025);
-        // if (test.Count > 0)
-        // {
-        //     test.Add(test.First());
-        // }
-        //
-        // test.Reverse();
-        return test;
+        if (connections.Count > 1)
+        {
+            foreach (var path in test)
+            {
+                writePath(path);
+            }   
+        }
+        return Clipper.SimplifyPaths(test, 0.025);
     }
     
     private static PathD Connect(Dictionary<PointD, PathD> connections, PathD path)
@@ -200,17 +203,15 @@ public static class SlicerHandler
     }
     public static PathsD ErodeAndShell(PathsD slice, double nozzleWidth, int nrShells)
     {
-        Console.WriteLine("eroding");
         var eroded = Clipper.SimplifyPaths(Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Miter, EndType.Polygon), 0.025);
         
         PathsD output = new PathsD();
         for(int i = 0; i < nrShells; i++){
-            PathsD temp = Clipper.SimplifyPaths(Clipper.InflatePaths(eroded, -nozzleWidth * i, JoinType.Miter, EndType.Polygon), 0.025);
+            PathsD temp = Clipper.SimplifyPaths(Clipper.InflatePaths(eroded, - nozzleWidth * i, JoinType.Miter, EndType.Polygon), 0.025);
             foreach(var path in temp){
                 output.Add(path);
             }
         }
-        
         return output;
     }
 }
