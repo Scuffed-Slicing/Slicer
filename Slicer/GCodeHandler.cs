@@ -121,11 +121,14 @@ public class GCodeHandler
         //         double fillemantAmount = 1;
         // double prevX = -1;
         // double prevY = -1;
+        
         _filamentAmount += 1;
+        File.AppendAllText(loc, "G1 F1500 E" + _filamentAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)+"\n");
+        
         for (int i = 0; i < p.Count; i++)
         {   
-            if(i != 0){
-                double lenght = Math.Sqrt(Math.Pow(prevX - p[i].x, 2.0) + Math.Pow(prevY - p[i].y, 2.0));
+            if(prevX!= -1 && prevY != -1){
+                var lenght = Math.Sqrt(Math.Pow(prevX - p[i].x, 2.0) + Math.Pow(prevY - p[i].y, 2.0));
                 _filamentAmount += nozzleWidth / 2 * nozzleWidth * lenght / (1.75 / 2 * 1.75 / 2 * Math.PI);
             }
 
@@ -161,6 +164,7 @@ public class GCodeHandler
                 
                 foreach(var p  in model[i]){
                     //generate the slice
+                    p.Add(p.First());
                     GenerateSlice(p, loc, first, offset, NozzleWidth);
                     first = false;
                 }
@@ -172,7 +176,7 @@ public class GCodeHandler
                     first = false;
                 }
                 
-                File.AppendAllText(loc, "G1 Z" + counter * LayerHeight +" E-10 ; move to next Layer\n");
+                File.AppendAllText(loc, "G1 Z" + counter * LayerHeight +"; move to next Layer\n");
                 File.AppendAllText(loc,";-----------------------LayerDone-------------------\n\n");
                 counter++;             
             }
