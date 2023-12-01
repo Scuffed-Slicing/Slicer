@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Media.Media3D;
+using System.Windows.Shapes;
 using Clipper2Lib;
 
 namespace Slicer;
@@ -36,16 +37,14 @@ public static class SlicerHandler
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
             var eroded = Clipper.InflatePaths(slice, -nozzleWidth * (shells + 0.25), JoinType.Miter, EndType.Polygon);
             ClipperD clip = new ClipperD();
-            clip.AddPaths(eroded, PathType.Subject, false);
-            clip.AddPaths(fill, PathType.Clip, false);
+            // Clipper.SimplifyPaths(eroded, 1);
             
+            clip.AddClip(fill);
+            clip.AddSubject(slice);
             PathsD sol = new PathsD();
-            clip.Execute(ClipType.Intersection, FillRule.NonZero, sol);
+            clip.Execute(ClipType.Intersection, FillRule.EvenOdd, sol);
             
-            foreach (var path in sol)
-            {
-                path.Add(path.First());
-            }
+            Console.WriteLine(sol.Count);
             infills.Add(sol);
         }
 
@@ -57,70 +56,38 @@ public static class SlicerHandler
          * and then we divide by root(2) so we can add that nr to the x and y coord
          */
         // double spacing = (double.Pow(fillPercent, -1) * nozzleWidth) / double.RootN(2, 2);
-        double spacing = 10;
-        double miniOffset = 0.01;
+        double spacing = 5;
         PathsD pattern = new PathsD();
-        PathsD row = new PathsD();
         
-
+        
         PointD centre = new PointD(-squareSize / 2, -squareSize / 2);
         PointD end = new PointD(squareSize / 2, squareSize / 2);
         
-        while (centre.x <= end.x + spacing)
+        while (centre.x <= end.x)
         {
-            // PointD tr = new PointD(centre.x + spacing / 2, centre.y + spacing / 2);
-            // PointD tl = new PointD(centre.x - spacing / 2, centre.y + spacing / 2);
-            // PointD br = new PointD(centre.x + spacing / 2, centre.y - spacing / 2);
-            // PointD bl = new PointD(centre.x - spacing / 2, centre.y - spacing / 2);
-            //
-            // PathD square = new PathD{tr, br, bl, tl};
+            PointD topLine = new PointD(centre.x - squareSize / 2, centre.y + squareSize / 2);
+            PointD botLine = new PointD(centre.x + squareSize / 2, centre.y - squareSize / 2);
+            pattern.Add(new PathD{topLine, botLine});
 
-            PointD t = new PointD(centre.x, centre.y + spacing / 2);
-            PointD l = new PointD(centre.x - spacing / 2, centre.y);
-            PointD b = new PointD(centre.x, centre.y - spacing / 2);
-            PointD r = new PointD(centre.x + spacing / 2, centre.y );
-            
-            PathD square = new PathD{t, l, b, r};
-
-            row.Add(square);
-            
-            centre.x += spacing + miniOffset;
+            centre.x += spacing;
+            centre.y += spacing;
         }
         
-        foreach (var square in row)
+        centre = new PointD(-squareSize / 2, squareSize / 2);
+        end = new PointD(squareSize / 2, -squareSize / 2);
+        
+        while (centre.x <= end.x)
         {
-            pattern.Add(square);
-        }
-
-        // return pattern;
-
-        var linenr = 1;
-        centre.y += (spacing + miniOffset);
-        while (centre.y <= end.y + spacing)
-        {
-            PathsD copyRow = new PathsD();
-            for (int i = 0; i < row.Count; i++)
-            {
-                var squareCpy = new PathD();
-
-                foreach (var square in row[i])
-                {
-                    squareCpy.Add(new PointD(square.x, square.y + (spacing + miniOffset) * linenr));
-                }
-                
-                copyRow.Add(squareCpy);
-            }
+            PointD topLine = new PointD(centre.x + squareSize / 2, centre.y + squareSize / 2);
+            PointD botLine = new PointD(centre.x - squareSize / 2, centre.y - squareSize / 2);
             
-            foreach (var square in copyRow)
-            {
-                pattern.Add(square);
-            }
+            pattern.Add(new PathD{topLine, botLine});
 
-            linenr++;
-            centre.y += spacing + miniOffset;
+            centre.x += spacing;
+            centre.y -= spacing;
         }
-
-        return pattern;
+        
+        return Clipper.SimplifyPaths(pattern, 0.025, false);
 
     }
     public static PathsD FindIntersectionPointsAtHeight(MeshGeometry3D model, double sliceHeight)
@@ -184,7 +151,15 @@ public static class SlicerHandler
             connections.Add(connected.First(), connected);
         }
 
-        return new PathsD(connections.Values);
+        PathsD test = new PathsD ( connections.Values );
+        test = Clipper.SimplifyPaths(test, 0.025);
+        // if (test.Count > 0)
+        // {
+        //     test.Add(test.First());
+        // }
+        //
+        // test.Reverse();
+        return test;
     }
     
     private static PathD Connect(Dictionary<PointD, PathD> connections, PathD path)
@@ -226,11 +201,11 @@ public static class SlicerHandler
     public static PathsD ErodeAndShell(PathsD slice, double nozzleWidth, int nrShells)
     {
         Console.WriteLine("eroding");
-        var eroded = Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Miter, EndType.Polygon);
+        var eroded = Clipper.SimplifyPaths(Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Miter, EndType.Polygon), 0.025);
         
         PathsD output = new PathsD();
         for(int i = 0; i < nrShells; i++){
-            PathsD temp = Clipper.InflatePaths(eroded, -nozzleWidth * i, JoinType.Miter, EndType.Polygon);
+            PathsD temp = Clipper.SimplifyPaths(Clipper.InflatePaths(eroded, -nozzleWidth * i, JoinType.Miter, EndType.Polygon), 0.025);
             foreach(var path in temp){
                 output.Add(path);
             }
