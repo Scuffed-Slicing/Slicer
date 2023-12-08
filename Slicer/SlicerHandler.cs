@@ -54,11 +54,11 @@ public static class SlicerHandler
     {
         if (top.Count == 0 || bottom.Count == 0)
         {
-            return Clipper.SimplifyPaths(GenRoofPatern(slice, nozzleWidth, shells), 0.025, true);
+            return Clipper.SimplifyPaths(GenRoofPattern(slice, nozzleWidth, shells), 0.025, true);
         }
 
         var clip = new ClipperD();
-        var roof = GenRoofPatern(slice, nozzleWidth, shells);
+        var roof = GenRoofPattern(slice, nozzleWidth, shells);
 
         var top1 = Clipper.Difference(roof, top[0], FillRule.NonZero);
         var top2 = Clipper.Difference(roof, top[1], FillRule.NonZero);
@@ -72,7 +72,7 @@ public static class SlicerHandler
         clip.AddSubject(bot2);
 
         clip.Execute(ClipType.Union, FillRule.NonZero, roof);
-        var eroded = Clipper.InflatePaths(roof, - nozzleWidth * (shells - 1) , JoinType.Miter, EndType.Polygon);
+        var eroded = Clipper.InflatePaths(roof, - nozzleWidth * (shells) , JoinType.Miter, EndType.Polygon);
         while (eroded.Count > 0)
         {
             var newSlice = Clipper.InflatePaths(eroded, - nozzleWidth , JoinType.Miter, EndType.Polygon);
@@ -86,11 +86,10 @@ public static class SlicerHandler
         return Clipper.SimplifyPaths(roof, 0.025, true);
     }
 
-    private static PathsD GenRoofPatern(PathsD slice, double nozzleWidth, int shells)
+    private static PathsD GenRoofPattern(PathsD slice, double nozzleWidth, int shells)
     {
         var roofs = new PathsD();
-        //removed the 0.5 here add it back if too close to edge
-        var eroded = Clipper.InflatePaths(slice, - nozzleWidth * (0.5 + shells - 1) , JoinType.Miter, EndType.Polygon);
+        var eroded = Clipper.InflatePaths(slice, -nozzleWidth * (shells) , JoinType.Miter, EndType.Polygon);
         
         foreach (var path in eroded)
         {
@@ -117,7 +116,7 @@ public static class SlicerHandler
         {
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
             
-            var eroded = Clipper.InflatePaths(figure[i], - nozzleWidth * (0.25 + shells - 1) , JoinType.Miter, EndType.Polygon);
+            var eroded = Clipper.InflatePaths(figure[i], - nozzleWidth * (shells) , JoinType.Miter, EndType.Polygon);
             ClipperD clip = new ClipperD();
             ClipperD clip2 = new ClipperD();
 
