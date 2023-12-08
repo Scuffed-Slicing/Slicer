@@ -27,7 +27,6 @@ namespace Slicer
             _infill = new List<PathsD>();
             _nozzleWidth = 0.4;
             _shells = 1;
-            _genCode = false;
             _layerHeight = 0.2;
             
         }
@@ -42,27 +41,17 @@ namespace Slicer
 
         public  double  NozzleWidth
         {
-            get
-            { return _nozzleWidth;  }
-            set
-            {
-                _nozzleWidth = double.Round(value, 1);
-                NozzleWidth_OnValueChanged(_nozzleWidth);
-            }
+            get => _nozzleWidth;
+            set => _nozzleWidth = double.Round(value, 1);
+            // NozzleWidth_OnValueChanged(_nozzleWidth);
         }
 
         public int Shells
         {
             get => _shells;
-
             set => _shells = value;
         }
-
-        public bool GenGcode
-        {
-            get => _genCode;
-            set => _genCode = value;
-        }
+        
         private void ImportFile(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog explorer = new Microsoft.Win32.OpenFileDialog();
@@ -114,8 +103,10 @@ namespace Slicer
             
             _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth, _layerHeight, _shells);
             _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
+
+            Console.WriteLine(CodeBool.IsChecked);
             
-            if (_genCode)
+            if (CodeBool.IsChecked.Value)
             {
                 GCodeHandler gCodeHandler = new GCodeHandler();
                 gCodeHandler.GenerateGCodeModel(_figure, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
@@ -172,36 +163,7 @@ namespace Slicer
                     return;
             }
         }
-
-        private void NozzleWidth_OnValueChanged(double value)
-        {
-            MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            if (mesh != null)
-            {
-                _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth, _layerHeight, _shells);
-                _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
-                if (_genCode)
-                {
-                    GCodeHandler gCodeHandler = new GCodeHandler();
-                    gCodeHandler.GenerateGCodeModel(_figure, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
-                }
-            }
-            
-            double height = CuttingPlane.Content.Transform.Value.OffsetZ;
-            double newHeight = 0;
-            
-            while (newHeight < height)
-            {
-                newHeight += _nozzleWidth;
-            }
-
-            if (newHeight != 0)
-            {
-                newHeight -= _nozzleWidth;
-            }
-            
-            CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, newHeight);
-        }
+        
     }
 
 }

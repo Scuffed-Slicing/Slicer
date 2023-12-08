@@ -20,6 +20,7 @@ public static class SlicerHandler
             height = double.Round(height, 2);
             var slice = FindIntersectionPointsAtHeight(mesh, height + double.Epsilon);
             slice = ConnectPaths(slice);
+            
             slice = ErodeAndShell(slice, nozzleWidth, shells);
             figure.Add(slice);
             height += layerHeight;
@@ -45,11 +46,16 @@ public static class SlicerHandler
             PathsD sol = new PathsD();
             
             clip.Execute(ClipType.Intersection, FillRule.NonZero, solThrow, sol);
-            Console.WriteLine(sol.Count);
             
             infills.Add(sol);
         }
 
+        foreach (var path in infills[0])
+        {
+            writePath(path);
+        }
+        
+        
         return infills;
     }
     public static PathsD GenerateInfill(double fillPercent, double squareSize, double nozzleWidth)
@@ -107,8 +113,8 @@ public static class SlicerHandler
                 /* check if the slice height is in between both points
                  * the slicing plane cant intersect with a vertex because epsilon gets added to it
                  */
-                if (double.Max(double.Round(tri[j].Z, 4), double.Round(tri[k].Z, 4)) > sliceHeight &&
-                    double.Min(double.Round(tri[j].Z, 4), double.Round(tri[k].Z, 4)) < sliceHeight)
+                if (double.Max(double.Round(tri[j].Z, 10), double.Round(tri[k].Z, 10)) > sliceHeight &&
+                    double.Min(double.Round(tri[j].Z, 10), double.Round(tri[k].Z, 10)) < sliceHeight)
                     pointsOnHeight.Add(FindIntersectionPoint(tri[j], tri[k], sliceHeight));
 
             //verbind alle punten die indezer driehoek gevonden zijn
@@ -116,14 +122,14 @@ public static class SlicerHandler
             foreach (var point in pointsOnHeight) convPoints.Add(new PointD(point.X, point.Y));
 
             //empty groups and single points can be ignored
-            if (convPoints.Count == 0) continue;
+            if (convPoints.Count < 2) continue;
             
             // // sometimes a line that is the same point twice gets formed
-            // if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y) continue;
+            if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y) continue;
             
             var temp = new PathD(convPoints);
-            // output.Add(temp);
-            output.Add(Clipper.SimplifyPath(temp, 0.025));
+            output.Add(temp);
+            // output.Add(Clipper.SimplifyPath(temp, 0.025));
         }
 
         return output;
@@ -141,7 +147,7 @@ public static class SlicerHandler
         var y2 = p2.Y;
 
         // return new Point3D(x1 + t * (x2 - x1), y1 + t * (y2 - y1), height);
-        return new Point3D(double.Round(x1 + t * (x2 - x1), 6), double.Round(y1 + t * (y2 - y1), 6), height);
+        return new Point3D(double.Round(x1 + t * (x2 - x1), 10), double.Round(y1 + t * (y2 - y1), 10), height);
     }
     
     private static PathsD ConnectPaths(PathsD paths)
@@ -155,14 +161,8 @@ public static class SlicerHandler
 
 
         PathsD test = new PathsD ( connections.Values );
-        if (connections.Count > 1)
-        {
-            foreach (var path in test)
-            {
-                writePath(path);
-            }   
-        }
-        return Clipper.SimplifyPaths(test, 0.025);
+
+        return test;
     }
     
     private static PathD Connect(Dictionary<PointD, PathD> connections, PathD path)

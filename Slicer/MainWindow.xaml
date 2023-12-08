@@ -42,7 +42,7 @@
                     Gen G-code:  
                 </TextBlock.Text>
             </TextBlock>
-            <CheckBox Grid.Column="5" IsChecked="{Binding GenCode}" x:Name="CodeBool"/>
+            <CheckBox Grid.Column="5"  IsChecked="{Binding GenCode}" x:Name="CodeBool"/>
         </Grid>
         <h:HelixViewport3D BorderThickness="1" BorderBrush="Black" Grid.Row="1" KeyDown="Viewport3D_OnKeyDown"
                            ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
