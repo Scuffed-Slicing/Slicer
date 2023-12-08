@@ -114,8 +114,11 @@ namespace Slicer
             
             if (CodeBool.IsChecked.Value)
             {
-                GCodeHandler gCodeHandler = new GCodeHandler();
-                gCodeHandler.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
+                // GCodeHandler gCodeHandler = new GCodeHandler();
+                // gCodeHandler.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
+                var outPath = "../../../output.gcode";
+                GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
+                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight, outPath);
             }
 
             

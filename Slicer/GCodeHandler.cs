@@ -80,7 +80,7 @@ public class GCodeHandler
     private double _filamentAmount = -1;
     double prevX = -1;
     double prevY = -1;
-    private void GenerateSlice(PathD p, string loc, bool first,double offset, double nozzleWidth){
+    private void GenerateSlice(PathD p, string loc, bool first, double offset, double nozzleWidth){
         // File.AppendAllText(loc, "G92 E0  ;Reset Extruder");
         // File.AppendAllText(loc, "G1 F1500 E5");
         //         double fillemantAmount = 1;
