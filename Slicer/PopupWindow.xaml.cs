@@ -17,6 +17,8 @@ public partial class PopupWindow : Window
 {
     private List<PathsD> _shells;
     private List<PathsD> _infill;
+    private List<PathsD> _roofs;
+    
     private double _offset;
     private int _layer;
 
@@ -89,6 +91,25 @@ public partial class PopupWindow : Window
             brush++;
         }
         
+        //roofs
+        foreach (var path in _roofs[_layer]){
+            for (int j = 0; j < path.Count; j++)
+            {
+                Line line = new Line();
+            
+                line.Stroke = System.Windows.Media.Brushes.Crimson;
+                line.StrokeThickness = 2;
+                
+                line.X1 = (_offset + path[j].x) * zoom;
+                line.Y1 = (_offset + path[j].y) * zoom;
+                
+                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+
+                Canvas.Children.Add(line);
+            }
+        }
+        
         //infill
         foreach (var path in _infill[_layer]){
             for (int j = 0; j < path.Count; j++)
@@ -107,13 +128,16 @@ public partial class PopupWindow : Window
                 Canvas.Children.Add(line);
             }
         }
+        
+
     }
-    public PopupWindow(List<PathsD> shells, List<PathsD> infill, double offset, int layer)
+    public PopupWindow(List<PathsD> shells, List<PathsD> infill, List<PathsD> roofs,  double offset, int layer)
     {
 
         InitializeComponent();
         _infill = infill;
         _shells = shells;
+        _roofs = roofs;
         _offset = offset;
         _layer = layer;
         

@@ -22,22 +22,104 @@ public static class SlicerHandler
             slice = ConnectPaths(slice);
             
             slice = ErodeAndShell(slice, nozzleWidth, shells);
-            figure.Add(slice);
+            if (slice.Count > 0)
+            {
+                figure.Add(slice);
+            }
+            
             height += layerHeight;
         }
 
         return figure;
     }
 
-    public static List<PathsD> GenerateAllInfill(List<PathsD> figure, double fillPercent, double squareSize, double nozzleWidth, int shells)
+    public static List<PathsD> GenerateAllRoofs(List<PathsD> figure, double nozzleWidth, int shells)
+    {
+        var roofs = new List<PathsD>();
+        for (int i = 0; i < figure.Count; i++)
+        {
+            if (i < 2 || i > figure.Count - 2 - 1)
+            {
+                roofs.Add(GenerateRoof(figure[i], new List<PathsD>(), new List<PathsD>(), nozzleWidth, shells));
+                continue;
+            }
+
+            var top = new List<PathsD> { figure[i + 2], figure[i + 1] };
+            var bottom = new List<PathsD> { figure[i - 2], figure[i - 1] };
+            roofs.Add(GenerateRoof(figure[i], top, bottom, nozzleWidth, shells));
+        }
+        return roofs;
+    }
+    public static PathsD GenerateRoof(PathsD slice, List<PathsD> top, List<PathsD> bottom, double nozzleWidth, int shells)
+    {
+        if (top.Count == 0 || bottom.Count == 0)
+        {
+            return Clipper.SimplifyPaths(GenRoofPatern(slice, nozzleWidth, shells), 0.025, true);
+        }
+
+        var clip = new ClipperD();
+        var roof = GenRoofPatern(slice, nozzleWidth, shells);
+
+        var top1 = Clipper.Difference(roof, top[0], FillRule.NonZero);
+        var top2 = Clipper.Difference(roof, top[1], FillRule.NonZero);
+        
+        var bot1 = Clipper.Difference(roof, bottom[0], FillRule.NonZero);
+        var bot2 = Clipper.Difference(roof, bottom[1], FillRule.NonZero);
+        
+        clip.AddSubject(top1);
+        clip.AddSubject(top2);
+        clip.AddSubject(bot1);
+        clip.AddSubject(bot2);
+
+        clip.Execute(ClipType.Union, FillRule.NonZero, roof);
+        var eroded = Clipper.InflatePaths(roof, - nozzleWidth * (shells - 1) , JoinType.Miter, EndType.Polygon);
+        while (eroded.Count > 0)
+        {
+            var newSlice = Clipper.InflatePaths(eroded, - nozzleWidth , JoinType.Miter, EndType.Polygon);
+            foreach (var path in newSlice)
+            {
+                roof.Add(path);
+            }
+            eroded = newSlice;
+        }
+        
+        return Clipper.SimplifyPaths(roof, 0.025, true);
+    }
+
+    private static PathsD GenRoofPatern(PathsD slice, double nozzleWidth, int shells)
+    {
+        var roofs = new PathsD();
+        //removed the 0.5 here add it back if too close to edge
+        var eroded = Clipper.InflatePaths(slice, - nozzleWidth * (0.5 + shells - 1) , JoinType.Miter, EndType.Polygon);
+        
+        foreach (var path in eroded)
+        {
+            roofs.Add(path);
+        }
+        
+        while (eroded.Count > 0)
+        {
+            var newSlice = Clipper.InflatePaths(eroded, - nozzleWidth , JoinType.Miter, EndType.Polygon);
+            foreach (var path in newSlice)
+            {
+                roofs.Add(path);
+            }
+            eroded = newSlice;
+        }
+
+        return roofs;
+    } 
+    public static List<PathsD> GenerateAllInfill(List<PathsD> figure, List<PathsD> roofs, double fillPercent, double squareSize, double nozzleWidth, int shells)
     {
         var infills = new List<PathsD>();
 
-        foreach (var slice in figure)
+        for (int i = 0; i < figure.Count; i++)
         {
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
-            var eroded = Clipper.InflatePaths(slice, - nozzleWidth * (0.5 + shells - 1) , JoinType.Miter, EndType.Polygon);
+            
+            var eroded = Clipper.InflatePaths(figure[i], - nozzleWidth * (0.25 + shells - 1) , JoinType.Miter, EndType.Polygon);
             ClipperD clip = new ClipperD();
+            ClipperD clip2 = new ClipperD();
 
             clip.AddOpenSubject(fill);
             clip.AddClip(eroded);
@@ -47,6 +129,10 @@ public static class SlicerHandler
             
             clip.Execute(ClipType.Intersection, FillRule.NonZero, solThrow, sol);
             
+            clip2.AddOpenSubject(sol);
+            clip2.AddClip(roofs[i]);
+
+            clip2.Execute(ClipType.Difference, FillRule.NonZero, solThrow, sol);
             infills.Add(sol);
         }
 
@@ -58,12 +144,9 @@ public static class SlicerHandler
         
         return infills;
     }
+    //TODO: (low prio) add a calc for an infill percent
     public static PathsD GenerateInfill(double fillPercent, double squareSize, double nozzleWidth)
     {
-        /* fill-percent is the inverse of the amount of room we need to leave to get said percent
-         * and then we divide by root(2) so we can add that nr to the x and y coord
-         */
-        // double spacing = (double.Pow(fillPercent, -1) * nozzleWidth) / double.RootN(2, 2);
         double spacing = 5;
         PathsD pattern = new PathsD();
         

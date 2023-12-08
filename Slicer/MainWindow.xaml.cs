@@ -25,6 +25,8 @@ namespace Slicer
             
             _figure = new List<PathsD>();
             _infill = new List<PathsD>();
+            _roofs = new List<PathsD>();
+            
             _nozzleWidth = 0.4;
             _shells = 1;
             _layerHeight = 0.2;
@@ -34,6 +36,8 @@ namespace Slicer
 
         private List<PathsD> _figure;
         private List<PathsD> _infill;
+        private List<PathsD> _roofs;
+        
         private bool _genCode;
         private int _shells;
         private double _nozzleWidth;
@@ -102,14 +106,16 @@ namespace Slicer
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
             
             _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth, _layerHeight, _shells);
-            _infill = SlicerHandler.GenerateAllInfill(_figure, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
+            _roofs = SlicerHandler.GenerateAllRoofs(_figure, _nozzleWidth, _shells); 
+            _infill = SlicerHandler.GenerateAllInfill(_figure, _roofs, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
+            
 
             Console.WriteLine(CodeBool.IsChecked);
             
             if (CodeBool.IsChecked.Value)
             {
                 GCodeHandler gCodeHandler = new GCodeHandler();
-                gCodeHandler.GenerateGCodeModel(_figure, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
+                gCodeHandler.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
             }
 
             
@@ -139,7 +145,7 @@ namespace Slicer
         private void ShowSlice(int printNr)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            PopupWindow popup = new PopupWindow(_figure , _infill, ModelHandler.GetMeshSize(mesh), printNr);
+            PopupWindow popup = new PopupWindow(_figure , _infill, _roofs, ModelHandler.GetMeshSize(mesh), printNr);
             
             popup.ShowDialog();
         }

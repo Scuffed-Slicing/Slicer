@@ -149,7 +149,7 @@ public class GCodeHandler
     }
 
 
-        public void GenerateGCodeModel(List<PathsD> model, List<PathsD> infill,double NozzleWidth, double offset, double LayerHeight){
+        public void GenerateGCodeModel(List<PathsD> model, List<PathsD> roofs, List<PathsD> infill,double NozzleWidth, double offset, double LayerHeight){
             var loc = "../../../output.gcode";
             File.Delete(loc);
             //do setup of printer
@@ -162,6 +162,14 @@ public class GCodeHandler
                 var first = true;
                 
                 foreach(var p  in model[i]){
+                    //generate the slice
+                    p.Add(p.First());
+                    GenerateSlice(p, loc, first, offset, NozzleWidth);
+                    first = false;
+                }
+                
+                first = true;
+                foreach(var p  in roofs[i]){
                     //generate the slice
                     p.Add(p.First());
                     GenerateSlice(p, loc, first, offset, NozzleWidth);
