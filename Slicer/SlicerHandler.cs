@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Printing;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using Clipper2Lib;
@@ -299,4 +300,27 @@ public static class SlicerHandler
         }
         return output;
     }
+     public static List<PathsD> GenerateSupports(List<PathsD> model){
+    List<PathsD> result = new List<PathsD>();
+
+
+    //go over model top to bottom 
+    //difference between prev and next layer = support needed
+    //add support + current layer together in temp use this for next one
+    //diff between temp and current layer = support 
+    //repeat
+    PathsD prevAndSup = model[model.Count - 1];
+    for(var i = model.Count-1; i >= 0; i--) {
+        PathsD supports = Clipper.Difference(prevAndSup,model[i],FillRule.NonZero);
+        result.Add(supports);
+        prevAndSup = Clipper.Union(model[i],supports,FillRule.NonZero);
+    }
+    //offset so it is ligtlky connected to model
+    //check for 45 degree angle cus self supporting
+
+
+    //check if output needs to be reversed
+    result.Reverse();
+    return result;
+ }
 }
