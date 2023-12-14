@@ -300,7 +300,7 @@ public static class SlicerHandler
         }
         return output;
     }
-     public static List<PathsD> GenerateSupports(List<PathsD> model){
+     public static List<PathsD> GenerateSupports(List<PathsD> model, double nozzleWidth){
     List<PathsD> result = new List<PathsD>();
 
 
@@ -310,15 +310,18 @@ public static class SlicerHandler
     //diff between temp and current layer = support 
     //repeat
     PathsD prevAndSup = model[model.Count - 1];
+    Console.WriteLine(model.Count);
     for(var i = model.Count-1; i >= 0; i--) {
-        PathsD supports = Clipper.Difference(prevAndSup,model[i],FillRule.NonZero);
-        result.Add(supports);
+        //check for 45 degree angle cus self supporting by inflating the layer with the nozzle width zo 45degrees would be a straight
+        
+        PathsD supports = Clipper.Difference(prevAndSup,Clipper.InflatePaths(model[i], nozzleWidth, JoinType.Miter, EndType.Polygon, MiterLimit),FillRule.EvenOdd);
         prevAndSup = Clipper.Union(model[i],supports,FillRule.NonZero);
+
+        //offset so it is ligtlky connected to model
+        result.Add(Clipper.InflatePaths(supports, - nozzleWidth, JoinType.Miter, EndType.Polygon, MiterLimit));
+
     }
-    //offset so it is ligtlky connected to model
-    //check for 45 degree angle cus self supporting
-
-
+    //TODO kijken als verticaal afbreebaakr is
     //check if output needs to be reversed
     result.Reverse();
     return result;

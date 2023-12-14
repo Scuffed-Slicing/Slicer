@@ -116,7 +116,7 @@ namespace Slicer
             _roofs = SlicerHandler.GenerateAllRoofs(_figure, _nozzleWidth, _shells); 
             _infill = SlicerHandler.GenerateAllInfill(_figure, _roofs, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
 
-            _supports = SlicerHandler.GenerateSupports(_figure); 
+            _supports = SlicerHandler.GenerateSupports(_figure, _nozzleWidth); 
             _supportsInfill = SlicerHandler.GenerateAllInfill(_supports, _roofs, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, 1);
 
             Console.WriteLine("layers");

@@ -139,7 +139,7 @@ public partial class PopupWindow : Window
                 Line line = new Line();
             
                 line.Stroke = System.Windows.Media.Brushes.Violet;
-                line.StrokeThickness = 1;
+                line.StrokeThickness = 3;
                 
                 line.X1 = (_offset + path[j].x) * zoom;
                 line.Y1 = (_offset + path[j].y) * zoom;
@@ -157,7 +157,7 @@ public partial class PopupWindow : Window
                 Line line = new Line();
             
                 line.Stroke = System.Windows.Media.Brushes.Violet;
-                line.StrokeThickness = 1;
+                line.StrokeThickness = 3;
                 
                 line.X1 = (_offset + path[j].x) * zoom;
                 line.Y1 = (_offset + path[j].y) * zoom;
