@@ -43,7 +43,7 @@ public class GcodeHandlerV2
         "M221 S100 ; reset extrude factor overwrite to 100%",
         "G90 ; coordinates to relative",
         "G1 F1800 E-3 ;retract filament 3 mm",
-        "G1 F3000 Z20 ; move up 20 mm",
+        "G1 F3000 Z20 ; move up {0} mm",
         "G90 ;coords to absolute",
         "G1 X0 Y235 F1000 ; move to front of heat bed",
         "M107 ;fan off",
@@ -117,7 +117,15 @@ public class GcodeHandlerV2
         }
 
         //reset printer
-        File.AppendAllLines(filePath, _resetLines);
+        for (int i = 0; i < _resetLines.Length; i++)
+        {
+            File.AppendAllText(filePath, _resetLines[i]);
+            if (i == 7)
+            {
+                File.AppendAllText(filePath, string.Format(_resetLines[i], Clean(height + 20)));
+
+            }
+        }
     }
 
     private void GenerateOpenPath(PathD path, double offset, double nozzleWidth, string commands)
@@ -179,6 +187,6 @@ public class GcodeHandlerV2
     private void ExtrudeFilament(string commands, double amount)
     {
         _filamentAmount += amount;
-        File.AppendAllText(commands,string.Format(ExtrudeCommand, 3000, _filamentAmount));
+        File.AppendAllText(commands,string.Format(ExtrudeCommand, _speed, _filamentAmount));
     }
 }
