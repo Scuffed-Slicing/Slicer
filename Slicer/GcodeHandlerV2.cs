@@ -59,7 +59,7 @@ public class GcodeHandlerV2
     private const string MoveUpCommand = "G1 F{0} Z{1}; moving up\n";
     private double _filamentAmount = -1;
     
-    public void GenerateGCodeModel(List<PathsD> model, List<PathsD> roofs, List<PathsD> infill, double nozzleWidth, double offset, double layerHeight, string filePath){
+    public void GenerateGCodeModel(List<PathsD> model, List<PathsD> roofs, List<PathsD> support,List<PathsD> supportInfill, List<PathsD> infill, double nozzleWidth, double offset, double layerHeight, string filePath){
         File.Delete(filePath);
         //do setup of printer
         File.WriteAllLines(filePath, _setuplines);
@@ -91,7 +91,20 @@ public class GcodeHandlerV2
 
             }
             File.AppendAllText(filePath, ";-----------------------Infill Done-------------------\n\n");
-            
+            foreach (var path in support[i])
+            {
+                GenerateClosedPath(path, offset, nozzleWidth, filePath);
+                File.AppendAllText(filePath, "\n");
+
+            }
+            File.AppendAllText(filePath, ";-----------------------supports Done-------------------\n\n");
+            foreach (var path in supportInfill[i])
+            {
+                GenerateOpenPath(path, offset, nozzleWidth, filePath);
+                File.AppendAllText(filePath, "\n");
+
+            }
+            File.AppendAllText(filePath, ";-----------------------Support infill Done-------------------\n\n");
             if (i == 0)
             {
                 File.AppendAllText(filePath, "M106; reenable fans");
