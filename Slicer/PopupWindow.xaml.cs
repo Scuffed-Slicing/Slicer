@@ -65,11 +65,9 @@ public partial class PopupWindow : Window
         
           List < Brush > strokes = new List<Brush>
         {
-            System.Windows.Media.Brushes.Black,
             System.Windows.Media.Brushes.Red,
             System.Windows.Media.Brushes.Blue,
-            System.Windows.Media.Brushes.Green,
-            System.Windows.Media.Brushes.Yellow
+            System.Windows.Media.Brushes.Green
         };
         var brush = 0;
         var zoom = 5;
@@ -101,7 +99,7 @@ public partial class PopupWindow : Window
             {
                 Line line = new Line();
             
-                line.Stroke = System.Windows.Media.Brushes.Crimson;
+                line.Stroke = System.Windows.Media.Brushes.Yellow;
                 line.StrokeThickness = 2;
                 
                 line.X1 = (_offset + path[j].x) * zoom;
@@ -120,7 +118,7 @@ public partial class PopupWindow : Window
             {
                 Line line = new Line();
             
-                line.Stroke = System.Windows.Media.Brushes.Pink;
+                line.Stroke = System.Windows.Media.Brushes.Black;
                 line.StrokeThickness = 1;
                 
                 line.X1 = (_offset + path[j].x) * zoom;
@@ -156,7 +154,7 @@ public partial class PopupWindow : Window
             {
                 Line line = new Line();
             
-                line.Stroke = System.Windows.Media.Brushes.Violet;
+                line.Stroke = System.Windows.Media.Brushes.Pink;
                 line.StrokeThickness = 3;
                 
                 line.X1 = (_offset + path[j].x) * zoom;

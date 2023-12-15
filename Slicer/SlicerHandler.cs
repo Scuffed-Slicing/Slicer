@@ -76,10 +76,10 @@ public static class SlicerHandler
 
         clip.Execute(ClipType.Union, FillRule.NonZero, roof);
         
-        var eroded = Clipper.InflatePaths(roof, - nozzleWidth * (shells) , JoinType.Miter, EndType.Polygon, MiterLimit);
+        var eroded = Clipper.InflatePaths(roof, - nozzleWidth * (shells) , JoinType.Round, EndType.Polygon);
         while (eroded.Count > 0)
         {
-            var newSlice = Clipper.InflatePaths(eroded, - nozzleWidth , JoinType.Miter, EndType.Polygon, MiterLimit);
+            var newSlice = Clipper.InflatePaths(eroded, - nozzleWidth , JoinType.Round, EndType.Polygon);
             foreach (var path in newSlice)
             {
                 roof.Add(path);
@@ -93,7 +93,7 @@ public static class SlicerHandler
     private static PathsD GenRoofPattern(PathsD slice, double nozzleWidth, int shells)
     {
         var roofs = new PathsD();
-        var eroded = Clipper.InflatePaths(slice, -nozzleWidth * (shells) , JoinType.Miter, EndType.Polygon, MiterLimit);
+        var eroded = Clipper.InflatePaths(slice, -nozzleWidth * (shells) , JoinType.Round, EndType.Polygon);
         
         foreach (var path in eroded)
         {
@@ -102,7 +102,7 @@ public static class SlicerHandler
         
         while (eroded.Count > 0)
         {
-            var newSlice = Clipper.InflatePaths(eroded, - nozzleWidth , JoinType.Miter, EndType.Polygon, MiterLimit);
+            var newSlice = Clipper.InflatePaths(eroded, - nozzleWidth , JoinType.Round, EndType.Polygon);
             foreach (var path in newSlice)
             {
                 roofs.Add(path);
@@ -120,7 +120,7 @@ public static class SlicerHandler
         {
             var fill = GenerateInfill(fillPercent, squareSize, nozzleWidth);
             
-            var eroded = Clipper.InflatePaths(figure[i], - nozzleWidth * (shells) , JoinType.Miter, EndType.Polygon, MiterLimit);
+            var eroded = Clipper.InflatePaths(figure[i], - nozzleWidth * (shells) , JoinType.Round, EndType.Polygon);
             ClipperD clip = new ClipperD();
             ClipperD clip2 = new ClipperD();
 
@@ -199,8 +199,8 @@ public static class SlicerHandler
                 /* check if the slice height is in between both points
                  * the slicing plane cant intersect with a vertex because epsilon gets added to it
                  */
-                if (double.Max(double.Round(tri[j].Z, 10), double.Round(tri[k].Z, 10)) > sliceHeight &&
-                    double.Min(double.Round(tri[j].Z, 10), double.Round(tri[k].Z, 10)) < sliceHeight)
+                if (double.Max(double.Round(tri[j].Z, 5), double.Round(tri[k].Z, 5)) > sliceHeight &&
+                    double.Min(double.Round(tri[j].Z, 5), double.Round(tri[k].Z, 5)) < sliceHeight)
                     pointsOnHeight.Add(FindIntersectionPoint(tri[j], tri[k], sliceHeight));
 
             //verbind alle punten die indezer driehoek gevonden zijn
@@ -233,7 +233,7 @@ public static class SlicerHandler
         var y2 = p2.Y;
 
         // return new Point3D(x1 + t * (x2 - x1), y1 + t * (y2 - y1), height);
-        return new Point3D(double.Round(x1 + t * (x2 - x1), 10), double.Round(y1 + t * (y2 - y1), 10), height);
+        return new Point3D(double.Round(x1 + t * (x2 - x1), 5), double.Round(y1 + t * (y2 - y1), 5), height);
     }
     
     private static PathsD ConnectPaths(PathsD paths)
@@ -244,8 +244,7 @@ public static class SlicerHandler
             var connected = Connect(connections, path);
             connections.Add(connected.First(), connected);
         }
-
-
+        
         PathsD test = new PathsD ( connections.Values );
 
         return test;
@@ -289,11 +288,11 @@ public static class SlicerHandler
     }
     public static PathsD ErodeAndShell(PathsD slice, double nozzleWidth, int nrShells)
     {
-        var eroded = Clipper.SimplifyPaths(Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Miter, EndType.Polygon, MiterLimit), 0.025);
+        var eroded = Clipper.SimplifyPaths(Clipper.InflatePaths(slice, -nozzleWidth / 2, JoinType.Round, EndType.Polygon), 0.025);
         
         PathsD output = new PathsD();
         for(int i = 0; i < nrShells; i++){
-            PathsD temp = Clipper.SimplifyPaths(Clipper.InflatePaths(eroded, - nozzleWidth * i, JoinType.Miter, EndType.Polygon, MiterLimit), 0.025);
+            PathsD temp = Clipper.SimplifyPaths(Clipper.InflatePaths(eroded, - nozzleWidth * i, JoinType.Round, EndType.Polygon), 0.025);
             foreach(var path in temp){
                 output.Add(path);
             }
@@ -314,11 +313,11 @@ public static class SlicerHandler
     for(var i = model.Count-1; i >= 0; i--) {
         //check for 45 degree angle cus self supporting by inflating the layer with the nozzle width zo 45degrees would be a straight
         
-        PathsD supports = Clipper.Difference(prevAndSup,Clipper.InflatePaths(model[i], nozzleWidth, JoinType.Miter, EndType.Polygon, MiterLimit),FillRule.EvenOdd);
+        PathsD supports = Clipper.Difference(prevAndSup,Clipper.InflatePaths(model[i], nozzleWidth, JoinType.Round, EndType.Polygon),FillRule.EvenOdd);
         prevAndSup = Clipper.Union(model[i],supports,FillRule.NonZero);
 
         //offset so it is ligtlky connected to model
-        result.Add(Clipper.InflatePaths(supports, - nozzleWidth, JoinType.Miter, EndType.Polygon, MiterLimit));
+        result.Add(Clipper.InflatePaths(supports, - nozzleWidth, JoinType.Round, EndType.Polygon));
 
     }
     //TODO kijken als verticaal afbreebaakr is
