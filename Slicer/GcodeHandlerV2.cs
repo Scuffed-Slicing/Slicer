@@ -91,12 +91,12 @@ public class GcodeHandlerV2
 
             }
             File.AppendAllText(filePath, ";-----------------------Infill Done-------------------\n\n");
-            foreach (var path in support[i])
-            {
-                GenerateClosedPath(path, offset, nozzleWidth, filePath);
-                File.AppendAllText(filePath, "\n");
+            // foreach (var path in support[i])
+            // {
+            //     GenerateClosedPath(path, offset, nozzleWidth, filePath);
+            //     File.AppendAllText(filePath, "\n");
 
-            }
+            // }
             File.AppendAllText(filePath, ";-----------------------supports Done-------------------\n\n");
             foreach (var path in supportInfill[i])
             {

@@ -76,7 +76,7 @@ public static class SlicerHandler
 
         clip.Execute(ClipType.Union, FillRule.NonZero, roof);
         
-        var eroded = Clipper.InflatePaths(roof, - nozzleWidth * (shells) , JoinType.Round, EndType.Polygon);
+        var eroded = roof;
         while (eroded.Count > 0)
         {
             var newSlice = Clipper.InflatePaths(eroded, - nozzleWidth , JoinType.Round, EndType.Polygon);
