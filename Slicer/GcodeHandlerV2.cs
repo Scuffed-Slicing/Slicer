@@ -18,7 +18,9 @@ public class GcodeHandlerV2
             "M82 ;absolute extrusion mode",
             "M220 S100 ;Reset Feed rate",
             "M221 S100 ;Reset Flow rate",
+            
             "G28 ;Home",
+            
             "G92 E0 ;Reset Extruder",
             "G1 Z2.0 F3000 ;Move Z Axis up",
             "G1 X10.1 Y20 Z0.28 F5000.0 ;Move to start position",
@@ -28,6 +30,9 @@ public class GcodeHandlerV2
             "G1 X10.4 Y145.0 Z0.28 F5000.0 ;Move to side a little",
             "G1 X10.4 Y20 Z0.28 F1500.0 E30 ;Draw the second line",
             "G92 E0  ;Reset Extruder",
+            "G0 E-1.0000 F1800 ;Retract a bit",
+            "G0 Z0.2 F3000 ;Move Z Axis up",
+            "G0 E0.0000 F1800",
         };
     
     string[] _resetLines = {
@@ -159,6 +164,6 @@ public class GcodeHandlerV2
     private void ExtrudeFilament(string commands, double amount)
     {
         _filamentAmount += amount;
-        File.AppendAllText(commands,string.Format(ExtrudeCommand, 1500, _filamentAmount));
+        File.AppendAllText(commands,string.Format(ExtrudeCommand, 3000, _filamentAmount));
     }
 }

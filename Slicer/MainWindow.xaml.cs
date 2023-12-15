@@ -82,8 +82,6 @@ namespace Slicer
                 double planeSize = ModelHandler.GetMeshSize(mesh) * 1.5;
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
-                
-
             }
             
         }
