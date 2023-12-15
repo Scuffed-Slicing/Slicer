@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Printing;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using Clipper2Lib;
@@ -299,4 +300,30 @@ public static class SlicerHandler
         }
         return output;
     }
+     public static List<PathsD> GenerateSupports(List<PathsD> model, double nozzleWidth){
+    List<PathsD> result = new List<PathsD>();
+
+
+    //go over model top to bottom 
+    //difference between prev and next layer = support needed
+    //add support + current layer together in temp use this for next one
+    //diff between temp and current layer = support 
+    //repeat
+    PathsD prevAndSup = model[model.Count - 1];
+    Console.WriteLine(model.Count);
+    for(var i = model.Count-1; i >= 0; i--) {
+        //check for 45 degree angle cus self supporting by inflating the layer with the nozzle width zo 45degrees would be a straight
+        
+        PathsD supports = Clipper.Difference(prevAndSup,Clipper.InflatePaths(model[i], nozzleWidth, JoinType.Miter, EndType.Polygon, MiterLimit),FillRule.EvenOdd);
+        prevAndSup = Clipper.Union(model[i],supports,FillRule.NonZero);
+
+        //offset so it is ligtlky connected to model
+        result.Add(Clipper.InflatePaths(supports, - nozzleWidth, JoinType.Miter, EndType.Polygon, MiterLimit));
+
+    }
+    //TODO kijken als verticaal afbreebaakr is
+    //check if output needs to be reversed
+    result.Reverse();
+    return result;
+ }
 }

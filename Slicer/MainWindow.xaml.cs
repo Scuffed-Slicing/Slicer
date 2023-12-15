@@ -26,6 +26,10 @@ namespace Slicer
             _figure = new List<PathsD>();
             _infill = new List<PathsD>();
             _roofs = new List<PathsD>();
+            _supports = new List<PathsD>();
+            _supportsInfill = new List<PathsD>();
+
+
             
             _nozzleWidth = 0.4;
             _shells = 1;
@@ -37,6 +41,9 @@ namespace Slicer
         private List<PathsD> _figure;
         private List<PathsD> _infill;
         private List<PathsD> _roofs;
+        private List<PathsD> _supports;
+        private List<PathsD> _supportsInfill;
+
         
         private bool _genCode;
         private int _shells;
@@ -106,6 +113,15 @@ namespace Slicer
             _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth, _layerHeight, _shells);
             _roofs = SlicerHandler.GenerateAllRoofs(_figure, _nozzleWidth, _shells); 
             _infill = SlicerHandler.GenerateAllInfill(_figure, _roofs, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
+
+            _supports = SlicerHandler.GenerateSupports(_figure, _nozzleWidth); 
+            _supportsInfill = SlicerHandler.GenerateAllInfill(_supports, _roofs, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, 1);
+
+            Console.WriteLine("layers");
+
+            Console.WriteLine(_supports.Count.ToString());
+            Console.WriteLine(_figure.Count.ToString());
+
             
 
             Console.WriteLine(CodeBool.IsChecked);
@@ -146,7 +162,7 @@ namespace Slicer
         private void ShowSlice(int printNr)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            PopupWindow popup = new PopupWindow(_figure , _infill, _roofs, ModelHandler.GetMeshSize(mesh), printNr);
+            PopupWindow popup = new PopupWindow(_figure , _infill, _roofs,_supports,_supportsInfill, ModelHandler.GetMeshSize(mesh), printNr);
             
             popup.ShowDialog();
         }

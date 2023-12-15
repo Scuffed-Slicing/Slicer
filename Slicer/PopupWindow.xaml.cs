@@ -18,6 +18,10 @@ public partial class PopupWindow : Window
     private List<PathsD> _shells;
     private List<PathsD> _infill;
     private List<PathsD> _roofs;
+    private List<PathsD> _supports;
+    private List<PathsD> _supportsInfill;
+
+
     
     private double _offset;
     private int _layer;
@@ -110,7 +114,7 @@ public partial class PopupWindow : Window
             }
         }
         
-        //infill
+        // infill
         foreach (var path in _infill[_layer]){
             for (int j = 0; j < path.Count; j++)
             {
@@ -128,16 +132,55 @@ public partial class PopupWindow : Window
                 Canvas.Children.Add(line);
             }
         }
+        //supports
+        foreach (var path in _supports[_layer]){
+            for (int j = 0; j < path.Count; j++)
+            {
+                Line line = new Line();
+            
+                line.Stroke = System.Windows.Media.Brushes.Violet;
+                line.StrokeThickness = 3;
+                
+                line.X1 = (_offset + path[j].x) * zoom;
+                line.Y1 = (_offset + path[j].y) * zoom;
+                
+                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+
+                Canvas.Children.Add(line);
+            }
+        }
+        //support infill
+        foreach (var path in _supportsInfill[_layer]){
+            for (int j = 0; j < path.Count; j++)
+            {
+                Line line = new Line();
+            
+                line.Stroke = System.Windows.Media.Brushes.Violet;
+                line.StrokeThickness = 3;
+                
+                line.X1 = (_offset + path[j].x) * zoom;
+                line.Y1 = (_offset + path[j].y) * zoom;
+                
+                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+
+                Canvas.Children.Add(line);
+            }
+        }
         
 
     }
-    public PopupWindow(List<PathsD> shells, List<PathsD> infill, List<PathsD> roofs,  double offset, int layer)
+    public PopupWindow(List<PathsD> shells, List<PathsD> infill, List<PathsD> roofs,List<PathsD> supports,List<PathsD> supportsInfill,  double offset, int layer)
     {
 
         InitializeComponent();
         _infill = infill;
         _shells = shells;
         _roofs = roofs;
+        _supports = supports;
+        _supportsInfill = supportsInfill;
+
         _offset = offset;
         _layer = layer;
         
