@@ -150,10 +150,10 @@ public static class SlicerHandler
     //TODO: (low prio) add a calc for an infill percent
     public static PathsD GenerateInfill(double fillPercent, double squareSize, double nozzleWidth)
     {
-        double spacing = 5;
         PathsD pattern = new PathsD();
-        
-        
+        if (fillPercent <= 0.0001) return pattern;
+        double spacing = (1 / fillPercent) * nozzleWidth * 2;
+
         PointD centre = new PointD(-squareSize / 2, -squareSize / 2);
         PointD end = new PointD(squareSize / 2, squareSize / 2);
         
@@ -195,13 +195,18 @@ public static class SlicerHandler
             var pointsOnHeight = new List<Point3D>();
             //this loop makes each triangle point combo go once (1-0, 2-0. 2-1)
             for (var j = 0; j < 3; j++)
-            for (var k = 0; k < j; k++)
-                /* check if the slice height is in between both points
-                 * the slicing plane cant intersect with a vertex because epsilon gets added to it
-                 */
-                if (double.Max(double.Round(tri[j].Z, 5), double.Round(tri[k].Z, 5)) > sliceHeight &&
-                    double.Min(double.Round(tri[j].Z, 5), double.Round(tri[k].Z, 5)) < sliceHeight)
-                    pointsOnHeight.Add(FindIntersectionPoint(tri[j], tri[k], sliceHeight));
+            {
+                for (var k = 0; k < j; k++)
+                {
+                    /* check if the slice height is in between both points
+                     * the slicing plane cant intersect with a vertex because epsilon gets added to it
+                     */
+                    if (double.Max(double.Round(tri[j].Z, 5), double.Round(tri[k].Z, 5)) > sliceHeight &&
+                        double.Min(double.Round(tri[j].Z, 5), double.Round(tri[k].Z, 5)) < sliceHeight)
+                        pointsOnHeight.Add(FindIntersectionPoint(tri[j], tri[k], sliceHeight));
+                }
+            }
+
 
             //verbind alle punten die indezer driehoek gevonden zijn
             var convPoints = new List<PointD>();
