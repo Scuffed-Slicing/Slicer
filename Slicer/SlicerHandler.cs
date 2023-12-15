@@ -38,19 +38,26 @@ public static class SlicerHandler
 
     public static List<PathsD> GenerateAllRoofs(List<PathsD> figure, double nozzleWidth, int shells)
     {
+        int numRoofs = 4;
         var roofs = new List<PathsD>();
         for (int i = 0; i < figure.Count; i++)
         {
-            if (i < 2 || i > figure.Count - 2 - 1)
+            if (i < numRoofs || i > figure.Count - numRoofs - 1)
             {
                 roofs.Add(GenerateRoof(figure[i], new List<PathsD>(), new List<PathsD>(), nozzleWidth, shells));
                 continue;
             }
+            
+            var top = new List<PathsD>();
+            var bottom = new List<PathsD>();
+            for (int j = 1; j <= numRoofs; j++)
+            {
+                top.Add(figure[i + j]);
+                bottom.Add(figure[i - j]);
+            }
 
-            var top = new List<PathsD> { figure[i + 2], figure[i + 1] };
-            var bottom = new List<PathsD> { figure[i - 2], figure[i - 1] };
             roofs.Add(GenerateRoof(figure[i], top, bottom, nozzleWidth, shells));
-        }
+        }   
         return roofs;
     }
     public static PathsD GenerateRoof(PathsD slice, List<PathsD> top, List<PathsD> bottom, double nozzleWidth, int shells)
@@ -63,17 +70,12 @@ public static class SlicerHandler
         var clip = new ClipperD();
         var roof = GenRoofPattern(slice, nozzleWidth, shells);
 
-        var top1 = Clipper.Difference(roof, top[0], FillRule.NonZero);
-        var top2 = Clipper.Difference(roof, top[1], FillRule.NonZero);
+        for (int i = 0; i < top.Count; i++)
+        {
+            clip.AddSubject(Clipper.Difference(roof, top[i], FillRule.NonZero));
+            clip.AddSubject(Clipper.Difference(roof, bottom[i], FillRule.NonZero));
+        }
         
-        var bot1 = Clipper.Difference(roof, bottom[0], FillRule.NonZero);
-        var bot2 = Clipper.Difference(roof, bottom[1], FillRule.NonZero);
-        
-        clip.AddSubject(top1);
-        clip.AddSubject(top2);
-        clip.AddSubject(bot1);
-        clip.AddSubject(bot2);
-
         clip.Execute(ClipType.Union, FillRule.NonZero, roof);
         
         var eroded = roof;
