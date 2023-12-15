@@ -132,7 +132,7 @@ namespace Slicer
                 // gCodeHandler.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
                 var outPath = "../../../output.gcode";
                 GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
-                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight, outPath);
+                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supports,_supportsInfill, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight, outPath);
             }
 
             
