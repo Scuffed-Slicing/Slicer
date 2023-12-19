@@ -10,11 +10,10 @@ namespace Slicer;
 
 public static class SlicerHandler
 {
-    private const double MiterLimit = double.Epsilon;
-
+    
     public static List<PathsD> SliceAll(MeshGeometry3D mesh, double nozzleWidth, double layerHeight, int shells)
     {
-        double height = 0;
+        var height = 0.0;
         var maxHeight = ModelHandler.GetMeshHeight(mesh);
         var figure = new List<PathsD>();
 
@@ -25,12 +24,14 @@ public static class SlicerHandler
             slice = ConnectPaths(slice);
             
             slice = ErodeAndShell(slice, nozzleWidth, shells);
-            if (slice.Count > 0)
-            {
-                figure.Add(slice);
-            }
-            
             height += layerHeight;
+
+            if (slice.Count == 0)
+            {
+                continue;
+            }
+            figure.Add(slice);
+
         }
 
         return figure;
@@ -62,13 +63,17 @@ public static class SlicerHandler
     }
     public static PathsD GenerateRoof(PathsD slice, List<PathsD> top, List<PathsD> bottom, double nozzleWidth, int shells)
     {
+        PathsD roof;
+
         if (top.Count == 0 || bottom.Count == 0)
         {
-            return Clipper.SimplifyPaths(GenRoofPattern(slice, nozzleWidth, shells), 0.025, true);
+            roof = GenRoofPattern(slice, nozzleWidth, shells);
+            if(roof.Any())  roof.RemoveAt(roof.Count - 2);
+            return Clipper.SimplifyPaths(roof, 0.025, true);
         }
 
         var clip = new ClipperD();
-        var roof = GenRoofPattern(slice, nozzleWidth, shells);
+        roof = GenRoofPattern(slice, nozzleWidth, shells);
 
         for (int i = 0; i < top.Count; i++)
         {
@@ -88,7 +93,8 @@ public static class SlicerHandler
             }
             eroded = newSlice;
         }
-        
+
+        if(roof.Any())  roof.RemoveAt(roof.Count - 2);
         return Clipper.SimplifyPaths(roof, 0.025, true);
     }
 
@@ -140,16 +146,9 @@ public static class SlicerHandler
             clip2.Execute(ClipType.Difference, FillRule.NonZero, solThrow, sol);
             infills.Add(sol);
         }
-
-        foreach (var path in infills[0])
-        {
-            writePath(path);
-        }
-        
         
         return infills;
     }
-    //TODO: (low prio) add a calc for an infill percent
     public static PathsD GenerateInfill(double fillPercent, double squareSize, double nozzleWidth)
     {
         PathsD pattern = new PathsD();
@@ -217,7 +216,7 @@ public static class SlicerHandler
             //empty groups and single points can be ignored
             if (convPoints.Count < 2) continue;
             
-            // // sometimes a line that is the same point twice gets formed
+            // sometimes a line that is the same point twice gets formed
             if (convPoints[0].x == convPoints[1].x && convPoints[0].y == convPoints[1].y) continue;
             
             var temp = new PathD(convPoints);
@@ -240,11 +239,239 @@ public static class SlicerHandler
         var y2 = p2.Y;
 
         // return new Point3D(x1 + t * (x2 - x1), y1 + t * (y2 - y1), height);
-        return new Point3D(double.Round(x1 + t * (x2 - x1), 5), double.Round(y1 + t * (y2 - y1), 5), height);
+        return new Point3D(double.Round(x1 + t * (x2 - x1), 10), double.Round(y1 + t * (y2 - y1), 10), height);
+    }    
+    private static PathsD ConnectPathsSlower(PathsD paths)
+    {
+        if (paths.Count == 0) return paths;
+        var connections = new List<PathD>();
+        bool didCon = true;
+        while(didCon)
+        {
+            didCon = false;
+            var path = paths.First();
+            paths.RemoveAt(0);
+            
+            (var connected, didCon) = ConnectSlower(paths, path);
+            paths.Add(connected);
+        }
+        
+        // PathsD test = new PathsD ( connections );
+
+        return paths;
+    }
+     private static (PathD, bool) ConnectSlower(PathsD connections, PathD path)
+     {
+         int firstInd = 0;
+         bool firstFront = false;
+         double firstDist = 0;
+         (firstInd, firstFront, firstDist) = ClosestIndex(path.First(), connections);
+         
+         int lastInd = 0;
+         bool lastFront = false;
+         double lastDist = 0;
+         (lastInd, lastFront, lastDist) = ClosestIndex(path.Last(), connections);
+        
+         if(double.Min(firstDist, lastDist) > 0.001) return (path, false);
+         
+         bool firstClosest = firstDist <= lastDist;
+        if (firstClosest && !firstFront)
+        {
+            var head = connections[firstInd];
+            connections.RemoveAt(firstInd);
+
+            var midX = (head.Last().x + path.First().x) / 2;
+            var midY = (head.Last().y + path.First().y) / 2;
+            
+            head.RemoveAt(head.Count - 1);
+            head.Add(new PointD(midX, midY));
+            
+            for (var j = 1; j < path.Count; j++) head.Add(path[j]);
+            return (head, true);
+        }
+            
+        if (!firstClosest && !lastFront)
+        {
+            var head = connections[lastInd];
+            connections.RemoveAt(lastInd);
+        
+            //this one took me an embarrassingly long time to realise
+            path.Reverse();
+            
+            var midX = (head.Last().x + path.First().x) / 2;
+            var midY = (head.Last().y + path.First().y) / 2;
+        
+            head.RemoveAt(head.Count - 1);
+            head.Add(new PointD(midX, midY));
+            
+            for (var j = 1; j < path.Count; j++) head.Add(path[j]);
+            return (head, true);
+
+        }
+        if (firstClosest && firstFront)
+        {
+            var tail = connections[firstInd];
+            connections.RemoveAt(firstInd);
+            
+            path.Reverse();
+            
+            var midX = (tail.First().x + path.Last().x) / 2;
+            var midY = (tail.First().y + path.Last().y) / 2;
+            
+            path.RemoveAt(path.Count - 1);
+            path.Add(new PointD(midX, midY));
+            
+            for (var j = 1; j < tail.Count; j++) path.Add(tail[j]);
+            return (path, true);
+
+        }
+
+        if (!firstClosest && lastFront)
+        {
+            var tail = connections[lastInd];
+            connections.RemoveAt(lastInd);
+
+            var midX = (tail.First().x + path.Last().x) / 2;
+            var midY = (tail.First().y + path.Last().y) / 2;
+
+            path.RemoveAt(path.Count - 1);
+            path.Add(new PointD(midX, midY));
+
+            for (var j = 1; j < tail.Count; j++) path.Add(tail[j]);
+            return (path, true);
+        }
+
+        return (path, false);
+    }
+
+     private static (int, bool, double) ClosestIndex(PointD point, List<PathD> paths)
+     {
+         double closest = double.MaxValue;
+         int closestInd = -1;
+         bool front = true;
+
+         for (int i = 0; i < paths.Count; i++)
+         {
+             var a2 = Math.Pow(point.x - paths[i].First().x, 2);
+             var b2 = Math.Pow(point.y - paths[i].First().y, 2);
+             var dist = Math.Sqrt(a2 + b2);
+             if (dist < closest)
+             {
+                 closestInd = i;
+                 front = true;
+                 closest = dist;
+             }
+             
+             a2 = Math.Pow(point.x - paths[i].Last().x, 2);
+             b2 = Math.Pow(point.y - paths[i].Last().y, 2);
+             dist = Math.Sqrt(a2 + b2);
+             if (dist < closest)
+             {
+                 closestInd = i;
+                 front = false;
+                 closest = dist;
+             }
+         }
+
+         return (closestInd, front, closest);
+     }
+    private static PathsD ConnectPathsSlow(PathsD paths)
+    {
+        var connections = new List<PathD>();
+        foreach (var path in paths)
+        {
+            var connected = ConnectSlow(connections, path);
+            connections.Add(connected);
+        }
+        
+        PathsD test = new PathsD ( connections );
+
+        return test;
     }
     
+    private static PathD ConnectSlow(List<PathD> connections, PathD path)
+    {
+        double eps = double.Pow(10, -8);
+        int i = 0;
+        while(i < connections.Count)
+        {
+            if(connections[i].Count == 0) continue;
+            
+            if ((connections[i].Last().x - eps <= path.First().x && path.First().x  <= connections[i].Last().x + eps)
+                && (connections[i].Last().y - eps <= path.First().y && path.First().y  <= connections[i].Last().y + eps))
+            {
+                var head = connections[i];
+                connections.RemoveAt(i);
+
+                var midX = (head.Last().x + path.First().x) / 2;
+                var midY = (head.Last().y + path.First().y) / 2;
+                
+                head.RemoveAt(head.Count - 1);
+                head.Add(new PointD(midX, midY));
+                
+                for (var j = 1; j < path.Count; j++) head.Add(path[j]);
+                return ConnectSlow(connections, head);
+            }
+            if ((connections[i].Last().x - eps <= path.Last().x && path.Last().x  <= connections[i].Last().x + eps)
+                 && (connections[i].Last().y - eps <= path.Last().y && path.Last().y  <= connections[i].Last().y + eps))
+            {
+                var head = connections[i];
+                connections.RemoveAt(i);
+            
+                //this one took me an embarrassingly long time to realise
+                path.Reverse();
+                
+                var midX = (head.Last().x + path.First().x) / 2;
+                var midY = (head.Last().y + path.First().y) / 2;
+            
+                head.RemoveAt(head.Count - 1);
+                head.Add(new PointD(midX, midY));
+                
+                for (var j = 1; j < path.Count; j++) head.Add(path[j]);
+                return ConnectSlow(connections, head);
+            }
+            if ((connections[i].First().x - eps <= path.First().x && path.First().x  <= connections[i].First().x + eps)
+                && (connections[i].First().y - eps <= path.First().y && path.First().y  <= connections[i].First().y + eps))
+            {
+                var tail = connections[i];
+                connections.RemoveAt(i);
+                
+                path.Reverse();
+                
+                var midX = (tail.First().x + path.Last().x) / 2;
+                var midY = (tail.First().y + path.Last().y) / 2;
+                
+                path.RemoveAt(path.Count - 1);
+                path.Add(new PointD(midX, midY));
+                
+                for (var j = 1; j < tail.Count; j++) path.Add(tail[j]);
+                return ConnectSlow(connections, path);
+            }
+            
+            if ((connections[i].First().x - eps <= path.Last().x && path.Last().x  <= connections[i].First().x + eps)
+                && (connections[i].First().y - eps <= path.Last().y && path.Last().y  <= connections[i].First().y + eps))
+            {
+                var tail = connections[i];
+                connections.RemoveAt(i);
+                
+                var midX = (tail.First().x + path.Last().x) / 2;
+                var midY = (tail.First().y + path.Last().y) / 2;
+                
+                path.RemoveAt(path.Count - 1);
+                path.Add(new PointD(midX, midY));
+                
+                for (var j = 1; j < tail.Count; j++) path.Add(tail[j]);
+                return ConnectSlow(connections, path);
+            }
+
+            i++;
+            if(i >= connections.Count) break;
+        }
+        return path;
+    }
     private static PathsD ConnectPaths(PathsD paths)
     {
+        
         var connections = new Dictionary<PointD, PathD>();
         foreach (var path in paths)
         {
@@ -253,9 +480,10 @@ public static class SlicerHandler
         }
         
         PathsD test = new PathsD ( connections.Values );
-
+        
         return test;
     }
+
     
     private static PathD Connect(Dictionary<PointD, PathD> connections, PathD path)
     {

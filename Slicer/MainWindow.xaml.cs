@@ -82,7 +82,7 @@ namespace Slicer
                 StLReader reader = new StLReader();
                 Model3DGroup group = reader.Read(filename);
                 GeometryModel3D geometryModel = ModelHandler.FindLargestModel(group);
-                
+                // ModelVisual3D.Content = geometryModel;
                 MeshGeometry3D mesh = geometryModel.Geometry as MeshGeometry3D ?? throw new InvalidOperationException();
                 ModelVisual3D.Content = new GeometryModel3D(ModelHandler.NormaliseMesh(mesh), geometryModel.Material);
                 
@@ -112,7 +112,7 @@ namespace Slicer
             
             _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth, _layerHeight, _shells);
             _roofs = SlicerHandler.GenerateAllRoofs(_figure, _nozzleWidth, _shells); 
-            _infill = SlicerHandler.GenerateAllInfill(_figure, _roofs, 0.5, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
+            _infill = SlicerHandler.GenerateAllInfill(_figure, _roofs, 0.15, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
 
             _supports = SlicerHandler.GenerateSupports(_figure, _nozzleWidth); 
             _supportsInfill = SlicerHandler.GenerateAllInfill(_supports, _roofs, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, 1);

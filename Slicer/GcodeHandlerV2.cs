@@ -14,7 +14,7 @@ public class GcodeHandlerV2
             "M140 S60; set bet temp to 60",
             "M105; report temps",
             "M107 ;fan off",
-            "M104 S200; set extruder temp",
+            "M104 S205; set extruder temp",
             "M82 ;absolute extrusion mode",
             "M220 S100 ;Reset Feed rate",
             "M221 S100 ;Reset Flow rate",
@@ -25,14 +25,11 @@ public class GcodeHandlerV2
             "G1 Z2.0 F3000 ;Move Z Axis up",
             "G1 X10.1 Y20 Z0.28 F5000.0 ;Move to start position",
             "M190 S60; wait for bed temp to reach 60",
-            "M109 S200.000000; wait for extruder temp to reach 200",
-            "G1 X10.1 Y145.0 Z0.28 F_speed.0 E15 ;Draw the first line",
-            "G1 X10.4 Y145.0 Z0.28 F5000.0 ;Move to side a little",
-            "G1 X10.4 Y20 Z0.28 F_speed.0 E30 ;Draw the second line",
+            "M109 S205; wait for extruder temp to reach 210",
+            "G1 X10.1 Y145.0 Z0.2 F_speed.0 E15 ;Draw the first line",
+            "G1 X10.4 Y145.0 Z0.2 F5000.0 ;Move to side a little",
+            "G1 X10.4 Y20 Z0.2 F_speed.0 E30 ;Draw the second line",
             "G92 E0  ;Reset Extruder",
-            "G0 E-1.0000 F1800 ;Retract a bit",
-            "G0 Z0.2 F3000 ;Move Z Axis up",
-            "G0 E0.0000 F1800",
         };
     
     string[] _resetLines = {
@@ -57,20 +54,23 @@ public class GcodeHandlerV2
     private const string MoveCommand = "G0 F{0} X{1} Y{2}; move to next point\n";
     private const string ExtrudeCommand = "G1 F{0} E{1}; set extrusion level\n";
     private const string MoveUpCommand = "G1 F{0} Z{1}; moving up\n";
-    private double _filamentAmount = -1;
-    private int _speed = 2250;
-    private int _extDist = 2;
-    
+    private double _filamentAmount = 0;
+    private const int Speed = 1700;
+    private const double FilamentDia = 1.75;
+    private const double ExtDist = 1;
+
     public void GenerateGCodeModel(List<PathsD> model, List<PathsD> roofs, List<PathsD> support,List<PathsD> supportInfill, List<PathsD> infill, double nozzleWidth, double offset, double layerHeight, string filePath){
         File.Delete(filePath);
         //do setup of printer
         File.WriteAllLines(filePath, _setuplines);
-        var height = 0.0;
+        var height = 0.2;
+        ExtrudeFilament(filePath, -ExtDist);
+        
         for (var i = 0; i < model.Count; i++)
         {
             foreach (var path in model[i])
             {
-                GenerateClosedPath(path, offset, nozzleWidth, filePath);
+                GenerateClosedPath(path, offset, nozzleWidth,layerHeight, filePath);
                 File.AppendAllText(filePath, "\n");
 
             }
@@ -78,7 +78,7 @@ public class GcodeHandlerV2
 
             foreach (var path in roofs[i])
             {
-                GenerateClosedPath(path, offset, nozzleWidth, filePath);
+                GenerateClosedPath(path, offset, nozzleWidth, layerHeight, filePath);
                 File.AppendAllText(filePath, "\n");
 
 
@@ -88,31 +88,31 @@ public class GcodeHandlerV2
             
             foreach (var path in infill[i])
             {
-                GenerateOpenPath(path, offset, nozzleWidth, filePath);
+                GenerateOpenPath(path, offset, nozzleWidth, layerHeight, filePath);
                 File.AppendAllText(filePath, "\n");
 
             }
             File.AppendAllText(filePath, ";-----------------------Infill Done-------------------\n\n");
             // foreach (var path in support[i])
             // {
-            //     GenerateClosedPath(path, offset, nozzleWidth, filePath);
+            //     GenerateClosedPath(path, offset, nozzleWidth, layerHeight, filePath);
             //     File.AppendAllText(filePath, "\n");
-
+            //
             // }
-            File.AppendAllText(filePath, ";-----------------------supports Done-------------------\n\n");
+            // File.AppendAllText(filePath, ";-----------------------supports Done-------------------\n\n");
             foreach (var path in supportInfill[i])
             {
-                GenerateOpenPath(path, offset, nozzleWidth, filePath);
+                GenerateOpenPath(path, offset, nozzleWidth, layerHeight, filePath);
                 File.AppendAllText(filePath, "\n");
 
             }
             File.AppendAllText(filePath, ";-----------------------Support infill Done-------------------\n\n");
-            if (i == 0)
+            if (i < 4)
             {
-                File.AppendAllText(filePath, "M106; reenable fans");
+                File.AppendAllText(filePath, $"M106 S{(i + 1) * (255/4)}; reenable fans at 3/4 speed\n");
             }
             height += layerHeight;
-            File.AppendAllText(filePath, string.Format(MoveUpCommand, _speed, Clean(height)));
+            File.AppendAllText(filePath, string.Format(MoveUpCommand, Speed, Clean(height)));
             File.AppendAllText(filePath, ";-----------------------Layer Done-------------------\n\n\n");
         }
 
@@ -128,46 +128,46 @@ public class GcodeHandlerV2
         }
     }
 
-    private void GenerateOpenPath(PathD path, double offset, double nozzleWidth, string commands)
+    private void GenerateOpenPath(PathD path, double offset, double nozzleWidth, double layerHeight, string commands)
     {
         for (int i = 0; i < path.Count; i++)
         {
             if (i == 0)
             {
                 //move to the first point
-                File.AppendAllText(commands,string.Format(MoveCommand, _speed, Clean(path[i].x + offset), Clean(path[i].y + offset)));
+                File.AppendAllText(commands,string.Format(MoveCommand, Speed, Clean(path[i].x + offset), Clean(path[i].y + offset)));
                 
                 // reset the extrusion
-                ExtrudeFilament(commands, _extDist);
+                ExtrudeFilament(commands, ExtDist + 0.1);
                 continue;
             }
             
             var lenght = CalcLenght(path[i], path[i - 1]);
-            _filamentAmount += CalcFil(nozzleWidth, lenght);
-            File.AppendAllText(commands,string.Format(PrintCommand, _speed, Clean(path[i].x + offset), Clean(path[i].y + offset), _filamentAmount));
+            _filamentAmount += CalcFil(nozzleWidth, lenght, layerHeight);
+            File.AppendAllText(commands,string.Format(PrintCommand, Speed, Clean(path[i].x + offset), Clean(path[i].y + offset), Clean(_filamentAmount)));
         }
-        ExtrudeFilament(commands, -_extDist);
+        ExtrudeFilament(commands, -ExtDist);
     }
 
-    private void GenerateClosedPath(PathD path, double offset, double nozzleWidth, string commands)
+    private void GenerateClosedPath(PathD path, double offset, double nozzleWidth, double layerHeight, string commands)
     {
         for (int i = 0; i <= path.Count; i++)
         {
             if (i == 0)
             {
                 //move to the first point
-                File.AppendAllText(commands,string.Format(MoveCommand, _speed, Clean(path[i].x + offset), Clean(path[i].y + offset)));
+                File.AppendAllText(commands,string.Format(MoveCommand, Speed, Clean(path[i].x + offset), Clean(path[i].y + offset)));
                 
                 // reset the extrusion
-                ExtrudeFilament(commands, _extDist);
+                ExtrudeFilament(commands, ExtDist + 0.1);
                 continue;
             }
             
             var lenght = CalcLenght(path[i % path.Count], path[i - 1]);
-            _filamentAmount += CalcFil(nozzleWidth, lenght);
-            File.AppendAllText(commands,string.Format(PrintCommand, _speed, Clean(path[i % path.Count].x + offset), Clean(path[i % path.Count].y + offset), _filamentAmount));
+            _filamentAmount += CalcFil(nozzleWidth, lenght, layerHeight);
+            File.AppendAllText(commands,string.Format(PrintCommand, Speed, Clean(path[i % path.Count].x + offset), Clean(path[i % path.Count].y + offset), Clean(_filamentAmount)));
         }
-        ExtrudeFilament(commands, -_extDist);
+        ExtrudeFilament(commands, -ExtDist);
     }
     private static string Clean(double value)
     {
@@ -179,14 +179,14 @@ public class GcodeHandlerV2
         return Math.Sqrt(Math.Pow(prevPoint.x - point.x, 2.0) + Math.Pow(prevPoint.y - point.y, 2.0));
     }
     
-    private static double CalcFil(double nozzleWidth, double length)
+    private static double CalcFil(double nozzleWidth, double length, double layerHeight)
     {
-        return nozzleWidth / 2 * nozzleWidth * length / (1.75 / 2 * 1.75 / 2 * Math.PI);
+        return (layerHeight * nozzleWidth * length) / (double.Pow(FilamentDia / 2, 2) * double.Pi);
     }
 
     private void ExtrudeFilament(string commands, double amount)
     {
         _filamentAmount += amount;
-        File.AppendAllText(commands,string.Format(ExtrudeCommand, _speed, _filamentAmount));
+        File.AppendAllText(commands,string.Format(ExtrudeCommand, Speed, Clean(_filamentAmount)));
     }
 }
