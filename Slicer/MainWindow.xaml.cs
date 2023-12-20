@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -7,6 +8,7 @@ using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using Clipper2Lib;
 using System.IO;
+using System.Timers;
 
 
 namespace Slicer
@@ -28,13 +30,6 @@ namespace Slicer
             _roofs = new List<PathsD>();
             _supports = new List<PathsD>();
             _supportsInfill = new List<PathsD>();
-
-
-            
-            _nozzleWidth = 0.4;
-            _shells = 1;
-            _layerHeight = 0.2;
-            
         }
 
 
@@ -44,23 +39,17 @@ namespace Slicer
         private List<PathsD> _supports;
         private List<PathsD> _supportsInfill;
 
-        
-        private bool _genCode;
-        private int _shells;
-        private double _nozzleWidth;
-        private double _layerHeight;
-
         public  double  NozzleWidth
         {
-            get => _nozzleWidth;
-            set => _nozzleWidth = double.Round(value, 1);
+            get => Settings.NozzleWidth;
+            set => Settings.NozzleWidth = double.Round(value, 1);
             // NozzleWidth_OnValueChanged(_nozzleWidth);
         }
 
         public int Shells
         {
-            get => _shells;
-            set => _shells = value;
+            get => Settings.ShellCount;
+            set => Settings.ShellCount = value;
         }
         
         private void ImportFile(object sender, RoutedEventArgs e)
@@ -85,8 +74,8 @@ namespace Slicer
                 // ModelVisual3D.Content = geometryModel;
                 MeshGeometry3D mesh = geometryModel.Geometry as MeshGeometry3D ?? throw new InvalidOperationException();
                 ModelVisual3D.Content = new GeometryModel3D(ModelHandler.NormaliseMesh(mesh), geometryModel.Material);
-                
-                double planeSize = ModelHandler.GetMeshSize(mesh) * 1.5;
+                Settings.SquareSize = ModelHandler.GetMeshSize(mesh);
+                double planeSize = Settings.SquareSize * 1.5;
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
             }
@@ -102,28 +91,51 @@ namespace Slicer
                 return;
             }
             
-            if (_nozzleWidth == 0)
+            if (Settings.NozzleWidth == 0)
             {
                 return;
             }
             
 
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
+            var stopWatch = new Stopwatch();
             
-            _figure = SlicerHandler.SliceAll(mesh, _nozzleWidth, _layerHeight, _shells);
-            _roofs = SlicerHandler.GenerateAllRoofs(_figure, _nozzleWidth, _shells); 
-            _infill = SlicerHandler.GenerateAllInfill(_figure, _roofs, 0.15, ModelHandler.GetMeshSize(mesh), _nozzleWidth, _shells);
+            Console.WriteLine("slicing main figure...");
+            stopWatch.Start();
+            _figure = SlicerHandler.SliceAll(mesh);
+            stopWatch.Stop();
+            Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
+            stopWatch.Reset();
 
-            _supports = SlicerHandler.GenerateSupports(_figure, _nozzleWidth); 
-            _supportsInfill = SlicerHandler.GenerateAllInfill(_supports, _roofs, 0.1, ModelHandler.GetMeshSize(mesh), _nozzleWidth, 1);
-
-            Console.WriteLine("layers");
-
-            Console.WriteLine(_supports.Count.ToString());
-            Console.WriteLine(_figure.Count.ToString());
-
+            Console.WriteLine("generating roofs...");
+            stopWatch.Start();
+            _roofs = SlicerHandler.GenerateAllRoofs(_figure); 
+            stopWatch.Stop();
+            Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
+            stopWatch.Reset();
             
-
+            Console.WriteLine("generating support shells...");
+            stopWatch.Start();
+            _supports = SlicerHandler.GenerateSupports(_figure);
+            stopWatch.Stop();
+            Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
+            stopWatch.Reset();
+            
+            Console.WriteLine("generating infill shells...");
+            stopWatch.Start();
+            _infill = SlicerHandler.GenerateAllInfill(_figure, _roofs, Settings.FigureFill);
+            stopWatch.Stop();
+            Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
+            stopWatch.Reset();
+            
+            Console.WriteLine("generating support infill...");
+            stopWatch.Start();           
+            _supportsInfill = SlicerHandler.GenerateAllInfill(_supports, _roofs, Settings.SupportFill);
+            stopWatch.Stop();
+            Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
+            stopWatch.Reset();
+            
+            
             Console.WriteLine(CodeBool.IsChecked);
             
             if (CodeBool.IsChecked.Value)
@@ -132,11 +144,11 @@ namespace Slicer
                 // gCodeHandler.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
                 var outPath = "../../../output.gcode";
                 GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
-                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supports,_supportsInfill, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight, outPath);
+                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath);
             }
 
             
-            int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / _nozzleWidth);
+            int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / Settings.LayerHeight);
             if (printNr <= _figure.Count && printNr >= 0)
             {
                 ShowSlice(printNr);
@@ -177,10 +189,10 @@ namespace Slicer
             switch (e.Key)
             {
                 case Key.R:
-                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height + _nozzleWidth);
+                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height + Settings.LayerHeight);
                     return;
                 case Key.F:
-                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height - _nozzleWidth);
+                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height - Settings.LayerHeight);
                     return;
                 default:
                     return;
