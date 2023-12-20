@@ -95,7 +95,6 @@ public static class SlicerHandler
         }
 
         if(roof.Any())  roof.RemoveAt(roof.Count - 1);
-        if(roof.Any())  roof.RemoveAt(roof.Count - 2);
         return Clipper.SimplifyPaths(roof, 0.025, true);
     }
 
