@@ -39,11 +39,10 @@ public static class SlicerHandler
 
     public static List<PathsD> GenerateAllRoofs(List<PathsD> figure)
     {
-        int numRoofs = 4;
         var roofs = new List<PathsD>();
         for (int i = 0; i < figure.Count; i++)
         {
-            if (i < numRoofs || i > figure.Count - numRoofs - 1)
+            if (i < Settings.ShellCount || i > figure.Count - Settings.ShellCount - 1)
             {
                 roofs.Add(GenerateRoof(figure[i], new List<PathsD>(), new List<PathsD>()));
                 continue;
@@ -51,7 +50,7 @@ public static class SlicerHandler
             
             var top = new List<PathsD>();
             var bottom = new List<PathsD>();
-            for (int j = 1; j <= numRoofs; j++)
+            for (int j = 1; j <= Settings.ShellCount; j++)
             {
                 top.Add(figure[i + j]);
                 bottom.Add(figure[i - j]);
@@ -68,8 +67,8 @@ public static class SlicerHandler
         if (top.Count == 0 || bottom.Count == 0)
         {
             roof = GenRoofPattern(slice);
-            if(roof.Any())  roof.RemoveAt(roof.Count - 1);
-            return Clipper.SimplifyPaths(roof, 0.025, true);
+            // if(roof.Any())  roof.RemoveAt(roof.Count - 1);
+            return Clipper.SimplifyPaths(roof, 0.025);
         }
 
         var clip = new ClipperD();
@@ -94,8 +93,8 @@ public static class SlicerHandler
             eroded = newSlice;
         }
 
-        if(roof.Any())  roof.RemoveAt(roof.Count - 1);
-        return Clipper.SimplifyPaths(roof, 0.025, true);
+        // if(roof.Any())  roof.RemoveAt(roof.Count - 1);
+        return Clipper.SimplifyPaths(roof, 0.025);
     }
 
     private static PathsD GenRoofPattern(PathsD slice)
@@ -535,23 +534,28 @@ public static class SlicerHandler
         }
         return output;
     }
-     public static List<PathsD> GenerateSupports(List<PathsD> model){
+    public static List<PathsD> GenerateSupports(List<PathsD> model){
     List<PathsD> result = new List<PathsD>();
-
-
+    
     //go over model top to bottom 
     //difference between prev and next layer = support needed
     //add support + current layer together in temp use this for next one
     //diff between temp and current layer = support 
     //repeat
-    PathsD prevAndSup = model[model.Count - 1];
-    Console.WriteLine(model.Count);
-    for(var i = model.Count-1; i >= 0; i--) {
+    
+    PathsD prevAndSup = model.Last();
+    
+    for(var i = model.Count - 1; i >= 0; i--) {
         //check for 45 degree angle cus self supporting by inflating the layer with the nozzle width zo 45degrees would be a straight
-        
+
         PathsD supports = Clipper.Difference(prevAndSup,Clipper.InflatePaths(model[i], Settings.NozzleWidth, JoinType.Round, EndType.Polygon),FillRule.EvenOdd);
         prevAndSup = Clipper.Union(model[i],supports,FillRule.NonZero);
-
+        if(i != model.Count - 1)
+            supports = Clipper.Difference(supports, model[i + 1], FillRule.NonZero);
+        
+        if(i != 0)
+            supports = Clipper.Difference(supports, model[i - 1], FillRule.NonZero);
+        
         //offset so it is ligtlky connected to model
         result.Add(Clipper.InflatePaths(supports, - Settings.NozzleWidth, JoinType.Round, EndType.Polygon));
 

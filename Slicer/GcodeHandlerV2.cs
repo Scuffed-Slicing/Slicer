@@ -153,7 +153,7 @@ public class GcodeHandlerV2
     private string GenerateClosedPath(PathD path, bool firstLayer)
     {
         var commands = "";
-        for (var i = 0; i <= path.Count + 1; i++)
+        for (var i = 0; i <= path.Count; i++)
         {
             if (i == 0)
             {

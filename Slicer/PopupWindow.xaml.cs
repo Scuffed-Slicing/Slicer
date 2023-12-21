@@ -130,24 +130,6 @@ public partial class PopupWindow : Window
                 Canvas.Children.Add(line);
             }
         }
-        //supports
-        foreach (var path in _supports[_layer]){
-            for (int j = 0; j < path.Count; j++)
-            {
-                Line line = new Line();
-            
-                line.Stroke = System.Windows.Media.Brushes.Violet;
-                line.StrokeThickness = 3;
-                
-                line.X1 = (_offset + path[j].x) * zoom;
-                line.Y1 = (_offset + path[j].y) * zoom;
-                
-                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
-                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
-
-                Canvas.Children.Add(line);
-            }
-        }
         //support infill
         foreach (var path in _supportsInfill[_layer]){
             for (int j = 0; j < path.Count; j++)
