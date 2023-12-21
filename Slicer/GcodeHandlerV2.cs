@@ -66,7 +66,7 @@ public class GcodeHandlerV2
         var height = Settings.LayerHeight;
         
         var commands = "";
-        commands += string.Format(SetUpLines, 210, Clean(height));
+        commands += string.Format(SetUpLines, Settings.NozzleTemp, Clean(height));
         commands += ExtrudeFilament(-ExtDist);
         File.AppendAllText(filePath, commands);
         
@@ -107,7 +107,7 @@ public class GcodeHandlerV2
                 commands += $"M106 S{(i + 1) * (255/4)}; ramping fan\n";
             }
             height += Settings.LayerHeight;
-            commands +=  string.Format(MoveUpCommand, Speed, Clean(height));
+            commands +=  string.Format(MoveUpCommand, Settings.PrintSpeed, Clean(height));
             commands += ";-----------------------Layer Done-------------------\n\n\n";
             File.AppendAllText(filePath, commands);
 
@@ -125,7 +125,7 @@ public class GcodeHandlerV2
             if (i == 0)
             {
                 //move to the first point
-                commands += string.Format(MoveCommand, Speed, Clean(path[i].x + Settings.SquareSize),
+                commands += string.Format(MoveCommand, Settings.PrintSpeed, Clean(path[i].x + Settings.SquareSize),
                         Clean(path[i].y + Settings.SquareSize));
                 
                 // reset the extrusion
@@ -137,12 +137,12 @@ public class GcodeHandlerV2
             _filamentAmount += CalcFill(lenght);
             if (firstLayer)
             {
-                commands += string.Format(PrintCommand, Clean(0.5 * Speed), Clean(path[i].x + Settings.SquareSize),
+                commands += string.Format(PrintCommand, Clean(0.8 * Settings.PrintSpeed), Clean(path[i].x + Settings.SquareSize),
                         Clean(path[i].y + Settings.SquareSize), Clean(_filamentAmount));
             }
             else
             {
-                commands += string.Format(PrintCommand, Speed, Clean(path[i].x + Settings.SquareSize),
+                commands += string.Format(PrintCommand, Settings.PrintSpeed, Clean(path[i].x + Settings.SquareSize),
                         Clean(path[i].y + Settings.SquareSize), Clean(_filamentAmount));
             }
         }
@@ -158,7 +158,7 @@ public class GcodeHandlerV2
             if (i == 0)
             {
                 //move to the first point
-                commands += string.Format(MoveCommand, Speed, Clean(path[i].x + Settings.SquareSize),
+                commands += string.Format(MoveCommand, Settings.PrintSpeed, Clean(path[i].x + Settings.SquareSize),
                         Clean(path[i].y + Settings.SquareSize));
                 
                 // reset the extrusion
@@ -170,12 +170,12 @@ public class GcodeHandlerV2
             _filamentAmount += CalcFill(lenght);
             if (firstLayer)
             {
-                commands += string.Format(PrintCommand, Clean(0.5 * Speed ), Clean(path[i % path.Count].x + Settings.SquareSize),
+                commands += string.Format(PrintCommand, Clean(0.8 * Settings.PrintSpeed ), Clean(path[i % path.Count].x + Settings.SquareSize),
                         Clean(path[i % path.Count].y + Settings.SquareSize), Clean(_filamentAmount));
             }
             else
             {
-                commands += string.Format(PrintCommand, Speed, Clean(path[i % path.Count].x + Settings.SquareSize),
+                commands += string.Format(PrintCommand, Settings.PrintSpeed, Clean(path[i % path.Count].x + Settings.SquareSize),
                         Clean(path[i % path.Count].y + Settings.SquareSize), Clean(_filamentAmount));
             }
         }
@@ -200,6 +200,6 @@ public class GcodeHandlerV2
     private string ExtrudeFilament(double amount)
     {
         _filamentAmount += amount;
-        return string.Format(ExtrudeCommand, Speed, Clean(_filamentAmount));
+        return string.Format(ExtrudeCommand, Settings.PrintSpeed, Clean(_filamentAmount));
     }
 }
