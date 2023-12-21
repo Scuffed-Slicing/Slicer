@@ -65,7 +65,7 @@ public class GcodeHandlerV2
         //do setup of printer
         var height = Settings.LayerHeight;
         
-        File.AppendAllText(filePath, string.Format(SetUpLines, 210, Clean(height)));
+        File.AppendAllText(filePath, string.Format(SetUpLines, Settings.NozzleTemp, Clean(height)));
         ExtrudeFilament(filePath, -ExtDist);
         
         for (var i = 0; i < model.Count; i++)
@@ -108,7 +108,7 @@ public class GcodeHandlerV2
                 File.AppendAllText(filePath, $"M106 S{(i + 1) * (255/4)}; ramping fan\n");
             }
             height += Settings.LayerHeight;
-            File.AppendAllText(filePath, string.Format(MoveUpCommand, Speed, Clean(height)));
+            File.AppendAllText(filePath, string.Format(MoveUpCommand, Settings.PrintSpeed, Clean(height)));
             File.AppendAllText(filePath, ";-----------------------Layer Done-------------------\n\n\n");
         }
 
@@ -124,7 +124,7 @@ public class GcodeHandlerV2
             {
                 //move to the first point
                 File.AppendAllText(commands,
-                    string.Format(MoveCommand, Speed, Clean(path[i].x + Settings.SquareSize),
+                    string.Format(MoveCommand, Settings.PrintSpeed, Clean(path[i].x + Settings.SquareSize),
                         Clean(path[i].y + Settings.SquareSize)));
                 
                 // reset the extrusion
@@ -137,13 +137,13 @@ public class GcodeHandlerV2
             if (firstLayer)
             {
                 File.AppendAllText(commands,
-                    string.Format(PrintCommand, Clean(0.5 * Speed), Clean(path[i].x + Settings.SquareSize),
+                    string.Format(PrintCommand, Clean(0.8 * Settings.PrintSpeed), Clean(path[i].x + Settings.SquareSize),
                         Clean(path[i].y + Settings.SquareSize), Clean(_filamentAmount)));
             }
             else
             {
                 File.AppendAllText(commands,
-                    string.Format(PrintCommand, Speed, Clean(path[i].x + Settings.SquareSize),
+                    string.Format(PrintCommand, Settings.PrintSpeed, Clean(path[i].x + Settings.SquareSize),
                         Clean(path[i].y + Settings.SquareSize), 
                         Clean(_filamentAmount)));
             }
@@ -159,7 +159,7 @@ public class GcodeHandlerV2
             {
                 //move to the first point
                 File.AppendAllText(commands,
-                    string.Format(MoveCommand, Speed, Clean(path[i].x + Settings.SquareSize),
+                    string.Format(MoveCommand, Settings.PrintSpeed, Clean(path[i].x + Settings.SquareSize),
                         Clean(path[i].y + Settings.SquareSize)));
                 
                 // reset the extrusion
