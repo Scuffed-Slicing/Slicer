@@ -293,8 +293,8 @@ namespace Slicer
         }
         
         // infill
-        if(EnableSupps.IsChecked.Value){
-            foreach (var path in _infill[layer]){
+
+        foreach (var path in _infill[layer]){
                 for (int j = 0; j < path.Count; j++)
                 {
                     Line line = new Line();
@@ -312,6 +312,7 @@ namespace Slicer
                 }
             }
             //support infill
+        if(EnableSupps.IsChecked.Value){
             foreach (var path in _supportsInfill[layer]){
                 for (int j = 0; j < path.Count; j++)
                 {
