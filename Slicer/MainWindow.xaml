@@ -44,18 +44,25 @@
             </TextBlock>
             <CheckBox Grid.Column="5"  IsChecked="{Binding GenCode}" x:Name="CodeBool"/>
         </Grid>
-        <h:HelixViewport3D BorderThickness="1" BorderBrush="Black" Grid.Row="1" KeyDown="Viewport3D_OnKeyDown"
-                           ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
-            
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+                <h:HelixViewport3D Grid.Column="0" BorderThickness="1" BorderBrush="Black" KeyDown="Viewport3D_OnKeyDown"
+                                ZoomExtentsWhenLoaded="True" x:Name="Viewport3D">
+                    
 
-            <!-- Remember to add light to the scene -->
-            <h:SunLight />
-            <ModelVisual3D x:Name="ModelVisual3D" />
+                    <!-- Remember to add light to the scene -->
+                    <h:SunLight />
+                    <ModelVisual3D x:Name="ModelVisual3D" />
 
-            <h:RectangleVisual3D x:Name="CuttingPlane" Width="100" Length="100" Normal="0,0,1"
-                                 Material="{h:Material Red, Opacity=0.45}"
-                                 BackMaterial="{h:Material Red, Opacity=0.45}" />
-        </h:HelixViewport3D>
+                    <h:RectangleVisual3D x:Name="CuttingPlane" Width="100" Length="100" Normal="0,0,1"
+                                        Material="{h:Material Red, Opacity=0.45}"
+                                        BackMaterial="{h:Material Red, Opacity=0.45}" />
+                </h:HelixViewport3D>
+                    <Canvas Grid.Column="1" x:Name="Canvas"/>
+            </Grid>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
@@ -67,7 +74,7 @@
                 <Button.Content>Import File</Button.Content>
             </Button>
 
-            <Button Grid.Column="1" Click="Slice">
+            <Button Grid.Column="1" Click="Slice2">
                 <Button.FontWeight>Bold</Button.FontWeight>
                 <Button.Content>Slice</Button.Content>
             </Button>

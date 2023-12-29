@@ -9,6 +9,13 @@ using HelixToolkit.Wpf;
 using Clipper2Lib;
 using System.IO;
 using System.Timers;
+using System.Collections.ObjectModel;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Ink;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using Rectangle = System.Drawing.Rectangle;
 
 
 namespace Slicer
@@ -31,11 +38,13 @@ namespace Slicer
             _supports = new List<PathsD>();
             _supportsInfill = new List<PathsD>();
         }
+        private double _offset;
 
 
         private List<PathsD> _figure;
         private List<PathsD> _infill;
         private List<PathsD> _roofs;
+
         private List<PathsD> _supports;
         private List<PathsD> _supportsInfill;
 
@@ -78,13 +87,17 @@ namespace Slicer
                 double planeSize = Settings.SquareSize * 1.5;
                 CuttingPlane.Length = planeSize;
                 CuttingPlane.Width = planeSize;
+                _offset = ModelHandler.GetMeshSize(mesh);
+                Slice();
+                Draw();
             }
             
         }
         
         //make clipper2 paths for model
+        private void Slice2(object sender, RoutedEventArgs e){}
         
-        private void Slice(object sender, RoutedEventArgs e)
+        private void Slice()
         {
             if (ModelVisual3D.Content == null)
             {
@@ -148,13 +161,13 @@ namespace Slicer
             }
 
             
-            int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / Settings.LayerHeight);
-            if (printNr <= _figure.Count && printNr >= 0)
-            {
-                ShowSlice(printNr);
-            } else {
-                ShowSlice(0);
-            }
+            // int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / Settings.LayerHeight);
+            // if (printNr <= _figure.Count && printNr >= 0)
+            // {
+            //     ShowSlice(printNr);
+            // } else {
+            //     ShowSlice(0);
+            // }
             
         }
         
@@ -174,9 +187,9 @@ namespace Slicer
         private void ShowSlice(int printNr)
         {
             MeshGeometry3D mesh = (ModelVisual3D.Content as GeometryModel3D).Geometry as MeshGeometry3D;
-            PopupWindow popup = new PopupWindow(_figure , _infill, _roofs,_supports,_supportsInfill, ModelHandler.GetMeshSize(mesh), printNr);
+            // PopupWindow popup = new PopupWindow(_figure , _infill, _roofs,_supports,_supportsInfill, ModelHandler.GetMeshSize(mesh), printNr);
             
-            popup.ShowDialog();
+            // popup.ShowDialog();
         }
         
 
@@ -190,15 +203,116 @@ namespace Slicer
             {
                 case Key.R:
                     CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height + Settings.LayerHeight);
+                    if(CuttingPlane.Content.Transform.Value.OffsetZ >0){
+                        Draw();
+                    }
                     return;
                 case Key.F:
                     CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height - Settings.LayerHeight);
+                    if(CuttingPlane.Content.Transform.Value.OffsetZ >0){
+                        Draw();
+                    }
                     return;
                 default:
                     return;
             }
         }
+        public void Draw(){
+        Canvas.Children.Clear();
+        int layer = (int)(CuttingPlane.Content.Transform.Value.OffsetZ/ Settings.LayerHeight);
+        if(_figure.Count <= layer){
+            return;
+        }
+        
+          List < Brush > strokes = new List<Brush>
+        {
+            System.Windows.Media.Brushes.Red,
+            System.Windows.Media.Brushes.Blue,
+            System.Windows.Media.Brushes.Green
+        };
+        var brush = 0;
+        var zoom = 4;
+
+        foreach (var path in _figure[layer])
+        {
+            //shells
+            for (int j = 0; j < path.Count; j++)
+            {
+                Line line = new Line();
+        
+                line.Stroke = strokes[brush % strokes.Count];
+                line.StrokeThickness = 2;
+        
+                line.X1 = (_offset + path[j].x) * zoom;
+                line.Y1 = (_offset + path[j].y) * zoom;
+        
+                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                
+                Canvas.Children.Add(line);
+            }
+            brush++;
+        }
+        
+        //roofs
+        foreach (var path in _roofs[layer]){
+            for (int j = 0; j < path.Count; j++)
+            {
+                Line line = new Line();
+            
+                line.Stroke = System.Windows.Media.Brushes.Yellow;
+                line.StrokeThickness = 2;
+                
+                line.X1 = (_offset + path[j].x) * zoom;
+                line.Y1 = (_offset + path[j].y) * zoom;
+                
+                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+
+                Canvas.Children.Add(line);
+            }
+        }
+        
+        // infill
+        foreach (var path in _infill[layer]){
+            for (int j = 0; j < path.Count; j++)
+            {
+                Line line = new Line();
+            
+                line.Stroke = System.Windows.Media.Brushes.Black;
+                line.StrokeThickness = 1;
+                
+                line.X1 = (_offset + path[j].x) * zoom;
+                line.Y1 = (_offset + path[j].y) * zoom;
+                
+                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+
+                Canvas.Children.Add(line);
+            }
+        }
+        //support infill
+        foreach (var path in _supportsInfill[layer]){
+            for (int j = 0; j < path.Count; j++)
+            {
+                Line line = new Line();
+            
+                line.Stroke = System.Windows.Media.Brushes.Pink;
+                line.StrokeThickness = 3;
+                
+                line.X1 = (_offset + path[j].x) * zoom;
+                line.Y1 = (_offset + path[j].y) * zoom;
+                
+                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+
+                Canvas.Children.Add(line);
+            }
+        }
+        
+
+    }
         
     }
-
+    
 }
