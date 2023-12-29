@@ -29,6 +29,12 @@ namespace Slicer
         {
             InitializeComponent();
             NozWidth.DataContext = this;
+            LayHeight.DataContext = this;
+            FigFill.DataContext = this;
+            SupFill.DataContext = this;
+            Temp.DataContext = this;
+            Speed.DataContext = this;
+
             ShellUpDown.DataContext = this;
             EnableSupps.DataContext = this;
             LayerSlider.DataContext = this;
@@ -52,11 +58,43 @@ namespace Slicer
         private List<PathsD> _supports;
         private List<PathsD> _supportsInfill;
         public  double  m_height;
+        private  bool  _WithSupps = false;
+
 
         public  double  NozzleWidth
         {
             get => Settings.NozzleWidth;
             set => Settings.NozzleWidth = double.Round(value, 1);
+            // NozzleWidth_OnValueChanged(_nozzleWidth);
+        }
+        public  double  SupportFill
+        {
+            get => Settings.SupportFill;
+            set => Settings.SupportFill = double.Round(value, 2);
+            // NozzleWidth_OnValueChanged(_nozzleWidth);
+        }
+        public  double  LayerHeight
+        {
+            get => Settings.LayerHeight;
+            set => Settings.LayerHeight = double.Round(value, 1);
+            // NozzleWidth_OnValueChanged(_nozzleWidth);
+        }
+        public  int  NozzleTemp
+        {
+            get => Settings.NozzleTemp;
+            set => Settings.NozzleTemp = value;
+            // NozzleWidth_OnValueChanged(_nozzleWidth);
+        }
+        public  int  PrintSpeed
+        {
+            get => Settings.PrintSpeed;
+            set => Settings.PrintSpeed = value;
+            // NozzleWidth_OnValueChanged(_nozzleWidth);
+        }
+        public  double  FigureFill
+        {
+            get => Settings.FigureFill;
+            set => Settings.FigureFill = double.Round(value, 2);
             // NozzleWidth_OnValueChanged(_nozzleWidth);
         }
 
@@ -103,7 +141,7 @@ namespace Slicer
         private void GenerateGcode(object sender, RoutedEventArgs e){
                 var outPath = "../../../output.gcode";
                 GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
-                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath);
+                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath, _WithSupps);
             
         }
         private void ReSlice(object sender, RoutedEventArgs e){
@@ -148,8 +186,9 @@ namespace Slicer
             stopWatch.Stop();
             Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
             stopWatch.Reset();
-
+            _WithSupps = false;
             if(EnableSupps.IsChecked.Value){
+                _WithSupps = true;
                 Console.WriteLine("generating support shells...");
                 stopWatch.Start();
                 _supports = SlicerHandler.GenerateSupports(_figure);
@@ -163,28 +202,6 @@ namespace Slicer
                 Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
                 stopWatch.Reset();
             }
-
-            
-            
-            // Console.WriteLine(CodeBool.IsChecked);
-            
-            // if (CodeBool.IsChecked.Value)
-            // {
-            //     // GCodeHandler gCodeHandler = new GCodeHandler();
-            //     // gCodeHandler.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
-            //     var outPath = "../../../output.gcode";
-            //     GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
-            //     gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath);
-            // }
-
-            
-            // int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / Settings.LayerHeight);
-            // if (printNr <= _figure.Count && printNr >= 0)
-            // {
-            //     ShowSlice(printNr);
-            // } else {
-            //     ShowSlice(0);
-            // }
             LayerSlider.Maximum = _figure.Count - 1;
             Draw();
             
@@ -312,7 +329,7 @@ namespace Slicer
                 }
             }
             //support infill
-        if(EnableSupps.IsChecked.Value){
+        if(_WithSupps){
             foreach (var path in _supportsInfill[layer]){
                 for (int j = 0; j < path.Count; j++)
                 {

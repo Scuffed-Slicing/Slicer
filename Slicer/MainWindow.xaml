@@ -6,9 +6,10 @@
         xmlns:h="http://helix-toolkit.org/wpf"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" d:DataContext="{d:DesignInstance }">
+        Title="MainWindow" Height="690" Width="1400" d:DataContext="{d:DesignInstance }">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height=".5*" />
             <RowDefinition Height=".5*" />
             <RowDefinition Height=".5*" />
             <RowDefinition Height="7*" />
@@ -21,6 +22,8 @@
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="5*" />
                 <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="0.5*" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0">
@@ -28,7 +31,7 @@
                     Nozzle Width:  
                 </TextBlock.Text>
             </TextBlock>
-            <xctk:DoubleUpDown Grid.Column="1" FormatString="F1" Increment="0.1" Minimum="0.1" DefaultValue="0.4"
+            <xctk:DoubleUpDown Grid.Column="1" FormatString="F1" Increment="0.1" Minimum="0.1"
                                CultureInfo="en-US" Value="{Binding NozzleWidth}" x:Name="NozWidth" />
             
             <TextBlock Grid.Column="2">
@@ -38,14 +41,68 @@
             </TextBlock>
             <xctk:IntegerUpDown Grid.Column="3" Increment="1" Minimum="1" DefaultValue="1"
                                 Value="{Binding Shells}" x:Name="ShellUpDown"/>
+
             <TextBlock Grid.Column="4">
+                <TextBlock.Text>
+                    Infill Density:  
+                </TextBlock.Text>
+            </TextBlock>
+            <xctk:DoubleUpDown Grid.Column="5" FormatString="F1" Increment="0.1" Minimum="0.01" Maximum="0.99"
+                               CultureInfo="en-US" Value="{Binding FigureFill}" x:Name="FigFill"/>
+
+
+            <TextBlock Grid.Column="6">
                 <TextBlock.Text>
                     supports:  
                 </TextBlock.Text>
             </TextBlock>
-            <CheckBox Grid.Column="5"  IsChecked="{Binding EnableSupps}" x:Name="EnableSupps"/>
+            <CheckBox Grid.Column="7"  IsChecked="{Binding EnableSupps}" x:Name="EnableSupps"/>
         </Grid>
         <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="5*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0">
+                <TextBlock.Text>
+                    Layer Height:  
+                </TextBlock.Text>
+            </TextBlock>
+            <xctk:DoubleUpDown Grid.Column="1" FormatString="F1" Increment="0.1" Minimum="0.1" DefaultValue="0.4"
+                               CultureInfo="en-US" Value="{Binding LayerHeight}" x:Name="LayHeight" />
+            
+            <TextBlock Grid.Column="2">
+                <TextBlock.Text>
+                    temprature:  
+                </TextBlock.Text>
+            </TextBlock>
+            <xctk:IntegerUpDown Grid.Column="3" Increment="1" Minimum="1" DefaultValue="1"
+                                Value="{Binding NozzleTemp}" x:Name="Temp"/>
+            <TextBlock Grid.Column="4">
+                <TextBlock.Text>
+                    Speed:  
+                </TextBlock.Text>
+            </TextBlock>
+            <xctk:IntegerUpDown Grid.Column="5" Increment="1" Minimum="1" DefaultValue="1"
+                                Value="{Binding PrintSpeed}" x:Name="Speed"/>
+            <TextBlock Grid.Column="6">
+                <TextBlock.Text>
+                    Infill Density:  
+                </TextBlock.Text>
+            </TextBlock>
+            <xctk:DoubleUpDown Grid.Column="7" FormatString="F1" Increment="0.1" Minimum="0.01" Maximum="0.99"
+                               CultureInfo="en-US" Value="{Binding SupportFill}" x:Name="SupFill"/>
+
+
+        
+        </Grid>
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width=".5*" />
@@ -53,7 +110,7 @@
             <Slider Grid.Column="0" x:Name="LayerSlider" Value="{Binding Layer}" Interval="1" Minimum="0"/>
             <TextBox Grid.Column="1" x:Name="LayerTextBox"  Text="{Binding LayerString}"></TextBox>
         </Grid>
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
                 <ColumnDefinition Width="1*" />
@@ -72,7 +129,7 @@
             </h:HelixViewport3D>
                 <Canvas Grid.Column="1" x:Name="Canvas"/>
         </Grid>
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
                 <ColumnDefinition Width="1*" />

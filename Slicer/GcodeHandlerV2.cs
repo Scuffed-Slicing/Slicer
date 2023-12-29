@@ -60,7 +60,7 @@ public class GcodeHandlerV2
     private double _filamentAmount;
 
 
-    public void GenerateGCodeModel(List<PathsD> model, List<PathsD> roofs,List<PathsD> supportInfill, List<PathsD> infill, string filePath){
+    public void GenerateGCodeModel(List<PathsD> model, List<PathsD> roofs,List<PathsD> supportInfill, List<PathsD> infill, string filePath, bool WithSupports){
         File.Delete(filePath);
         //do setup of printer
         var height = Settings.LayerHeight;
@@ -94,13 +94,14 @@ public class GcodeHandlerV2
                 commands += "\n";
             }
             commands += ";-----------------------Infill Done-------------------\n\n";
-
-            foreach (var path in supportInfill[i])
-            {
-                commands += GenerateOpenPath(path, false);
-                commands += "\n";
+            if(WithSupports){
+                foreach (var path in supportInfill[i])
+                {
+                    commands += GenerateOpenPath(path, false);
+                    commands += "\n";
+                }
+                commands += ";-----------------------Support infill Done-------------------\n\n";
             }
-            commands += ";-----------------------Support infill Done-------------------\n\n";
             
             if (i < 4)
             {

@@ -9,9 +9,12 @@ public static class Settings
     public static double SupportFill { set; get; } = 0.1;
     public static double FigureFill { set; get; } = 0.2;
     public static double SquareSize { set; get; } = 0.2;
+    public static bool EnableSupps { set; get; } = true;
 
-    public static double PrintSpeed { set; get; } = 1700;
-    public static double NozzleTemp { set; get; } = 205;
+
+
+    public static int PrintSpeed { set; get; } = 1700;
+    public static int NozzleTemp { set; get; } = 205;
 
 
 
