@@ -30,7 +30,11 @@ namespace Slicer
             InitializeComponent();
             NozWidth.DataContext = this;
             ShellUpDown.DataContext = this;
-            CodeBool.DataContext = this;
+            EnableSupps.DataContext = this;
+            LayerSlider.DataContext = this;
+            LayerTextBox.DataContext = this;
+            
+            // LayerSlider.Maximum = _shells.Count - 1;
             
             _figure = new List<PathsD>();
             _infill = new List<PathsD>();
@@ -47,6 +51,7 @@ namespace Slicer
 
         private List<PathsD> _supports;
         private List<PathsD> _supportsInfill;
+        public  double  m_height;
 
         public  double  NozzleWidth
         {
@@ -95,7 +100,15 @@ namespace Slicer
         }
         
         //make clipper2 paths for model
-        private void Slice2(object sender, RoutedEventArgs e){}
+        private void GenerateGcode(object sender, RoutedEventArgs e){
+                var outPath = "../../../output.gcode";
+                GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
+                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath);
+            
+        }
+        private void ReSlice(object sender, RoutedEventArgs e){
+            Slice();
+        }
         
         private void Slice()
         {
@@ -127,12 +140,7 @@ namespace Slicer
             Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
             stopWatch.Reset();
             
-            Console.WriteLine("generating support shells...");
-            stopWatch.Start();
-            _supports = SlicerHandler.GenerateSupports(_figure);
-            stopWatch.Stop();
-            Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
-            stopWatch.Reset();
+
             
             Console.WriteLine("generating infill shells...");
             stopWatch.Start();
@@ -140,25 +148,34 @@ namespace Slicer
             stopWatch.Stop();
             Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
             stopWatch.Reset();
-            
-            Console.WriteLine("generating support infill...");
-            stopWatch.Start();           
-            _supportsInfill = SlicerHandler.GenerateAllInfill(_supports, _roofs, Settings.SupportFill);
-            stopWatch.Stop();
-            Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
-            stopWatch.Reset();
-            
-            
-            Console.WriteLine(CodeBool.IsChecked);
-            
-            if (CodeBool.IsChecked.Value)
-            {
-                // GCodeHandler gCodeHandler = new GCodeHandler();
-                // gCodeHandler.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
-                var outPath = "../../../output.gcode";
-                GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
-                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath);
+
+            if(EnableSupps.IsChecked.Value){
+                Console.WriteLine("generating support shells...");
+                stopWatch.Start();
+                _supports = SlicerHandler.GenerateSupports(_figure);
+                stopWatch.Stop();
+                Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
+                stopWatch.Reset();
+                Console.WriteLine("generating support infill...");
+                stopWatch.Start();           
+                _supportsInfill = SlicerHandler.GenerateAllInfill(_supports, _roofs, Settings.SupportFill);
+                stopWatch.Stop();
+                Console.WriteLine($"Done! {stopWatch.Elapsed}s elapsed");
+                stopWatch.Reset();
             }
+
+            
+            
+            // Console.WriteLine(CodeBool.IsChecked);
+            
+            // if (CodeBool.IsChecked.Value)
+            // {
+            //     // GCodeHandler gCodeHandler = new GCodeHandler();
+            //     // gCodeHandler.GenerateGCodeModel(_figure, _roofs, _infill, _nozzleWidth, ModelHandler.GetMeshSize(mesh), _layerHeight);
+            //     var outPath = "../../../output.gcode";
+            //     GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
+            //     gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath);
+            // }
 
             
             // int printNr = (int)(CuttingPlane.Content.Transform.Value.OffsetZ / Settings.LayerHeight);
@@ -168,6 +185,8 @@ namespace Slicer
             // } else {
             //     ShowSlice(0);
             // }
+            LayerSlider.Maximum = _figure.Count - 1;
+            Draw();
             
         }
         
@@ -198,17 +217,17 @@ namespace Slicer
         private void Viewport3D_OnKeyDown(object sender, KeyEventArgs e)
         {
             
-            double height = CuttingPlane.Content.Transform.Value.OffsetZ;
+             m_height = CuttingPlane.Content.Transform.Value.OffsetZ;
             switch (e.Key)
             {
                 case Key.R:
-                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height + Settings.LayerHeight);
+                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, m_height + Settings.LayerHeight);
                     if(CuttingPlane.Content.Transform.Value.OffsetZ >0){
                         Draw();
                     }
                     return;
                 case Key.F:
-                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, height - Settings.LayerHeight);
+                    CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, m_height - Settings.LayerHeight);
                     if(CuttingPlane.Content.Transform.Value.OffsetZ >0){
                         Draw();
                     }
@@ -274,45 +293,82 @@ namespace Slicer
         }
         
         // infill
-        foreach (var path in _infill[layer]){
-            for (int j = 0; j < path.Count; j++)
-            {
-                Line line = new Line();
-            
-                line.Stroke = System.Windows.Media.Brushes.Black;
-                line.StrokeThickness = 1;
+        if(EnableSupps.IsChecked.Value){
+            foreach (var path in _infill[layer]){
+                for (int j = 0; j < path.Count; j++)
+                {
+                    Line line = new Line();
                 
-                line.X1 = (_offset + path[j].x) * zoom;
-                line.Y1 = (_offset + path[j].y) * zoom;
-                
-                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
-                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+                    line.Stroke = System.Windows.Media.Brushes.Black;
+                    line.StrokeThickness = 1;
+                    
+                    line.X1 = (_offset + path[j].x) * zoom;
+                    line.Y1 = (_offset + path[j].y) * zoom;
+                    
+                    line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                    line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
 
-                Canvas.Children.Add(line);
+                    Canvas.Children.Add(line);
+                }
+            }
+            //support infill
+            foreach (var path in _supportsInfill[layer]){
+                for (int j = 0; j < path.Count; j++)
+                {
+                    Line line = new Line();
+                
+                    line.Stroke = System.Windows.Media.Brushes.Pink;
+                    line.StrokeThickness = 3;
+                    
+                    line.X1 = (_offset + path[j].x) * zoom;
+                    line.Y1 = (_offset + path[j].y) * zoom;
+                    
+                    line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
+                    line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
+
+                    Canvas.Children.Add(line);
+                }
             }
         }
-        //support infill
-        foreach (var path in _supportsInfill[layer]){
-            for (int j = 0; j < path.Count; j++)
-            {
-                Line line = new Line();
-            
-                line.Stroke = System.Windows.Media.Brushes.Pink;
-                line.StrokeThickness = 3;
-                
-                line.X1 = (_offset + path[j].x) * zoom;
-                line.Y1 = (_offset + path[j].y) * zoom;
-                
-                line.Y2 = (_offset + path[(j + 1) % path.Count].y) * zoom;
-                line.X2 = (_offset + path[(j + 1) % path.Count].x) * zoom;
 
-                Canvas.Children.Add(line);
+    }
+        public int Layer
+        {
+            get => (int)m_height;
+            
+            set
+            {
+                m_height = value;
+                LayerTextBox.Text = value.ToString();
+                CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, m_height*Settings.LayerHeight);
+
+                Draw();
             }
         }
         
-
-    }
         
+        public string LayerString
+        {
+            get => m_height.ToString();
+            
+            set
+            {
+                try
+                {
+                    m_height = int.Parse(value);
+                }
+                catch (FormatException)
+                {
+                    return;
+                }
+
+                LayerSlider.Value = int.Parse(value);
+                CuttingPlane.Content.Transform = new TranslateTransform3D(0, 0, m_height*Settings.LayerHeight);
+
+                Draw();
+            }
+        }
     }
+    
     
 }
