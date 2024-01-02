@@ -16,6 +16,7 @@ using System.Windows.Ink;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Rectangle = System.Drawing.Rectangle;
+using Microsoft.Win32;
 
 
 namespace Slicer
@@ -139,9 +140,21 @@ namespace Slicer
         
         //make clipper2 paths for model
         private void GenerateGcode(object sender, RoutedEventArgs e){
-                var outPath = "../../../output.gcode";
-                GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
-                gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath, _WithSupps);
+                if(_figure.Count >= 1){
+                    SaveFileDialog saveFileDialog = new SaveFileDialog();
+                    saveFileDialog.ShowDialog();
+                    String outPath = saveFileDialog.FileName;
+                    outPath += ".gcode";
+                    // var outPath = "../../../output.gcode";
+                    GcodeHandlerV2 gCodeHandlerV2 = new GcodeHandlerV2();
+                    gCodeHandlerV2.GenerateGCodeModel(_figure, _roofs,_supportsInfill, _infill, outPath, _WithSupps);
+                    MessageBox.Show("Save Complete!");
+                }
+                else{
+                    MessageBox.Show("No Model Loaded");
+                }
+
+
             
         }
         private void ReSlice(object sender, RoutedEventArgs e){
