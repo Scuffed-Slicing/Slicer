@@ -67,7 +67,6 @@ public static class SlicerHandler
         if (top.Count == 0 || bottom.Count == 0)
         {
             roof = GenRoofPattern(slice);
-            // if(roof.Any())  roof.RemoveAt(roof.Count - 1);
             return Clipper.SimplifyPaths(roof, 0.025);
         }
 
@@ -93,7 +92,6 @@ public static class SlicerHandler
             eroded = newSlice;
         }
 
-        // if(roof.Any())  roof.RemoveAt(roof.Count - 1);
         return Clipper.SimplifyPaths(roof, 0.025);
     }
 
@@ -221,7 +219,6 @@ public static class SlicerHandler
             
             var temp = new PathD(convPoints);
             output.Add(temp);
-            // output.Add(Clipper.SimplifyPath(temp, 0.025));
         }
 
         return output;
@@ -238,7 +235,6 @@ public static class SlicerHandler
         var y1 = p1.Y;
         var y2 = p2.Y;
 
-        // return new Point3D(x1 + t * (x2 - x1), y1 + t * (y2 - y1), height);
         return new Point3D(double.Round(x1 + t * (x2 - x1), 10), double.Round(y1 + t * (y2 - y1), 10), height);
     }    
     private static PathsD ConnectPathsSlower(PathsD paths)
@@ -256,7 +252,6 @@ public static class SlicerHandler
             paths.Add(connected);
         }
         
-        // PathsD test = new PathsD ( connections );
 
         return paths;
     }
@@ -537,16 +532,10 @@ public static class SlicerHandler
     public static List<PathsD> GenerateSupports(List<PathsD> model){
     List<PathsD> result = new List<PathsD>();
     
-    //go over model top to bottom 
-    //difference between prev and next layer = support needed
-    //add support + current layer together in temp use this for next one
-    //diff between temp and current layer = support 
-    //repeat
     
     PathsD prevAndSup = model.Last();
     
     for(var i = model.Count - 1; i >= 0; i--) {
-        //check for 45 degree angle cus self supporting by inflating the layer with the nozzle width zo 45degrees would be a straight
 
         PathsD supports = Clipper.Difference(prevAndSup,Clipper.InflatePaths(model[i], Settings.NozzleWidth, JoinType.Round, EndType.Polygon),FillRule.EvenOdd);
         prevAndSup = Clipper.Union(model[i],supports,FillRule.NonZero);
@@ -560,8 +549,7 @@ public static class SlicerHandler
         result.Add(Clipper.InflatePaths(supports, - Settings.NozzleWidth, JoinType.Round, EndType.Polygon));
 
     }
-    //TODO kijken als verticaal afbreebaakr is
-    //check if output needs to be reversed
+
     result.Reverse();
     return result;
  }
